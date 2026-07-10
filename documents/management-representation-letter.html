@@ -63,63 +63,6 @@ th,td{
 
 <body>
 
-<!-- LOGIN GATE (client-side prototype) -->
-<div id="loginForm" style="margin:2.54cm; border:1px solid #999; padding:12px; background:#fff;">
-  <h3>Enter credentials to open document</h3>
-  <label style="display:inline-block;width:80px">User</label>
-  <input id="auth_user" type="text" style="width:200px"><br><br>
-  <label style="display:inline-block;width:80px">Password</label>
-  <input id="auth_pass" type="password" style="width:200px"><br><br>
-  <button type="button" onclick="checkCredentials()">Open</button>
-  <span id="auth_msg" style="color:#b30000; margin-left:12px;"></span>
-</div>
-
-<!-- Protected content (hidden until auth) -->
-<div id="protectedContent" style="display:none;">
-
-<!-- ================= SCRIPT ================= -->
-<script>
-// --- CLIENT-SIDE AUTH (inserted at top of existing script) ---
-/*
- Replace the two hex strings below with SHA-256 hex digests of your chosen
- username and password. Do NOT store plaintext here if you want minimal obscurity.
- To compute a digest quickly in browser console after loading the file, run:
-   (async function h(s){const a=new TextEncoder().encode(s);const d=await crypto.subtle.digest('SHA-256',a);
-    console.log(Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join(''))})('your-secret')
-*/
-const USER_HASH = '41e0660aa2975f3f8338a316caba1b5f97ecc1afaee73790e6b3a1b7ae3f530c';
-const PASS_HASH = '369a5fe60e29dcb8e7c3bde3be2573b7b9ee969f7b0e7f289ed16f0018952933';
-
-async function sha256Hex(text){
-  const data = new TextEncoder().encode(text);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-async function checkCredentials(){
-  const u = document.getElementById('auth_user').value || '';
-  const p = document.getElementById('auth_pass').value || '';
-  document.getElementById('auth_msg').textContent = '';
-  try{
-    const uh = await sha256Hex(u);
-    const ph = await sha256Hex(p);
-    if(uh === USER_HASH && ph === PASS_HASH){
-      document.getElementById('loginForm').style.display = 'none';
-      document.getElementById('protectedContent').style.display = 'block';
-      // initialize page state (existing reset function is defined later in file)
-      if(typeof resetBeforeJSONLoad === 'function') resetBeforeJSONLoad();
-      return;
-    }
-    document.getElementById('auth_msg').textContent = 'Invalid credentials';
-  }catch(e){
-    console.error(e);
-    document.getElementById('auth_msg').textContent = 'Error';
-  }
-}
-
-</script>
-
-
 <!-- ================= CONTROL PANEL ================= -->
 <div class="controls">
 <h3>Management Representation – Input Panel</h3>
@@ -1147,7 +1090,9 @@ ${contentClone.innerHTML}
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "Management_Representation_Letter.doc";
+    const company = (document.getElementById("COMPANY_NAME")?.textContent || "").trim();
+    const prefix = company ? company.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_") + "_" : "";
+    a.download = prefix + "Management_Representation_Letter.doc";
     document.body.appendChild(a);
     a.click();
 

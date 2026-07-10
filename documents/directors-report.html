@@ -667,6 +667,7 @@ signCount.addEventListener('change', renderSigns);
 <script>
 let directorsFromJSON = [];
 let boardMeetingsHeld = "";
+let companyNameFromJSON = "";
 </script>
 
 <script>
@@ -1009,6 +1010,10 @@ function bindFYFromITR(json) {
 
     document.getElementById("ORG_PLACE").textContent = place || "_____";
 
+  // COMPANY NAME (for the export filename)
+    companyNameFromJSON =
+        itr6.PartA_GEN1?.OrgFirmInfo?.AssesseeName?.SurNameOrOrgName || "";
+
 
 
 
@@ -1278,7 +1283,10 @@ if (dirSelection === "A") {
 
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'Directors_Report.doc';
+    const prefix = companyNameFromJSON
+        ? companyNameFromJSON.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_") + "_"
+        : "";
+    a.download = prefix + 'Directors_Report.doc';
     a.click();
 }
 </script>

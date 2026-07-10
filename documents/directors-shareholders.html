@@ -115,6 +115,8 @@ th, td{
 
 
 <script>
+let companyNameFromJSON = "";
+
 /* ================= LOAD JSON ================= */
 function loadJSON(input){
     const file = input.files[0];
@@ -124,9 +126,11 @@ function loadJSON(input){
     reader.onload = e => {
         try {
             const json = JSON.parse(e.target.result);
+            companyNameFromJSON =
+                json.ITR?.ITR6?.PartA_GEN1?.OrgFirmInfo?.AssesseeName?.SurNameOrOrgName || "";
             fillDirectors(json);
             fillShareholders(json);
-            
+
         } catch (err) {
             console.error(err);
             alert("Invalid JSON or structure mismatch");
@@ -286,7 +290,10 @@ ${content}
     const a = document.createElement("a");
 
     a.href = url;
-    a.download = "Directors_and_Shareholders.doc";
+    const prefix = companyNameFromJSON
+        ? companyNameFromJSON.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_") + "_"
+        : "";
+    a.download = prefix + "Directors_and_Shareholders.doc";
     document.body.appendChild(a);
     a.click();
 

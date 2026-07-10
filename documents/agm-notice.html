@@ -540,7 +540,9 @@ ${content.innerHTML}
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "AGM_Notice.doc";
+    const company = (document.querySelector(".company-name")?.textContent || "").trim();
+    const prefix = (company && company !== "_____") ? company.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_") + "_" : "";
+    a.download = prefix + "AGM_Notice.doc";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
