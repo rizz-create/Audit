@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AGM Notice – JSON Auto Fill</title>
+
+<style>
+body{
+    font-family: "Verdana", serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    margin: 2.54cm;
+    text-align: justify;
+}
+
+/* Control panel */
+.controls{
+    border: 1px solid #999;
+    padding: 12px;
+    margin-bottom: 24px;
+    background: #f5f5f5;
+}
+.controls label{
+    font-weight: bold;
+}
+
+@media print{
+    .controls{ display:none; }
+}
+
+/* Headings */
+h1{
+    text-align: center;
+    font-size: 12pt;
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 18pt;
+}
+h2{
+    font-size: 10.5pt;
+    font-weight: bold;
+    margin-top: 18pt;
+    margin-bottom: 6pt;
+}
+p{ margin: 0 0 6pt 0; }
+
+.signature{ margin-top: 30pt; }
+.attendance{ margin-top: 36pt; }
+.attendance h2{ text-align:center; text-decoration:underline; }
+.line{ margin-bottom:10pt; }
+</style>
+</head>
+
+<body>
+
+<!-- ================= CONTROLS ================= -->
+<div class="controls">
+    <label>Upload AGM JSON:</label>
+    <input type="file" accept=".json" onchange="loadJSON(this)">
+    <p style="font-size:9pt;margin-top:6px;">
+        JSON → Auto-fill → Print / Save as Word
+    </p>
+<label>Number of AGM :</label>
+<input type="number"
+       min="1"
+       id="AGM_MEETING_NO"
+       placeholder="Eg: 1, 2, 3">
+<br><br>
+<label>Date of notice of AGM :</label>
+<input type ="Date" data-input="DIREPORT_DATE">
+<br><br>
+<label>Date of AGM :</label>
+<input type ="Date" data-input="AGM.Dayofmeeting">
+<br><br>
+<label>Time of AGM :</label>
+<input type ="time" data-input="AGM.Meetingtime"><br><br>
+<div id="AGM_WARNING"
+     style="display:none;
+            margin-top:8px;
+            padding:8px;
+            background:#fff3cd;
+            border:1px solid #ffeeba;
+            color:#856404;
+            font-size:9.5pt;">
+</div>
+
+
+<div>
+        <label>No. of Signing Directors:</label>
+        <input id="SIGN_COUNT" type="number" min="1">
+</div>
+<div id="signInputs"></div>
+
+<div style="margin-top:10px;">
+    <label>Authorised Person for MCA Filing:</label><br>
+    <select id="AUTH_PERSON" onchange="setAuthorisedPerson()">
+        <option value="">-- Select Director --</option>
+    </select>
+</div>
+
+
+
+<div style="margin-top:8px;">
+    <label>Designation of Authorised Person:</label><br>
+    <select id="AUTH_DESIG_SELECT" onchange="updateAuthorisedDesignation()">
+        <option value="">-- Select Designation --</option>
+        <option value="Director">Director</option>
+        <option value="Managing Director">Managing Director</option>
+        <option value="Whole-time Director">Whole-time Director</option>
+        <option value="Chief Financial Officer">Chief Financial Officer</option>
+        <option value="Company Secretary">Company Secretary</option>
+    </select>
+</div>
+<br><br>
+<button onclick="exportToWord()"
+        style="margin-left:15px;padding:6px 12px;font-size:10pt;">
+    Export to Word
+</button>
+
+
+</div>
+
+<!-- ================= AGM NOTICE ================= -->
+
+<h1>Notice of Annual General Meeting</h1>
+
+<p>
+Notice is hereby given that the <strong><span class="agm-no"></span><sup class="agm-suffix"></sup></strong>
+Annual General Meeting of the members of
+<strong><span class="company-name"></span></strong>
+will be held on <strong><span data-bind="AGM.Dayofmeeting"></span></strong>,
+at the Registered Office of the Company at
+<strong><span class="Company-RegAddress"></span></strong>,
+at <strong><span data-bind="AGM.Meetingtime"></span></strong>,
+for transacting the following business:
+</p>
+
+<h2>Ordinary Business</h2>
+
+<ol style="margin-left:18pt;">
+    <li>
+        To consider and adopt the financial statements of the Company for the
+        financial year ended on <strong><span class="AGM-Fy_End"></span></strong> and the reports of the
+        Board of Directors and the Auditors thereon.
+    </li>
+
+    <li style="margin-top:8pt;">
+        Appointment of M/s. MARV &amp; Co, (Firm Registration No. 028530S) as
+        Statutory Auditors.“RESOLVED THAT pursuant to the provisions of Section 139 and other applicable
+provisions, if any, of the Companies Act, 2013 read with the rules made thereunder,
+M/s. MARV &amp; Co, Chartered Accountants (Firm Registration No. 028530S),
+be and are hereby appointed as the Statutory Auditors of the Company for a period
+of five financial years, to hold office from the conclusion of this Annual General
+Meeting until the conclusion of the sixth Annual General Meeting of the Company
+herefrom, on such remuneration as may be agreed upon between the Board of
+Directors or any committee thereof and the Statutory Auditors, in addition to the
+reimbursement of GST and actual out-of-pocket expenses incurred in relation with
+the audit of accounts of the Company.”
+    </li>
+</ol>
+
+
+<p>
+“RESOLVED FURTHER THAT <strong><span id="AUTH_NAME">_____</span></strong>,
+<strong><span id="AUTH_DESIG">_____</span></strong> of the Company be and is hereby authorised for and
+on behalf of the Company to take all necessary steps and to do all such acts,
+deeds, matters and things as may be deemed necessary in this behalf.”
+</p>
+
+
+
+<div class="section">
+    <table style="width:100%; border-collapse:collapse; border:none;">
+        <tr>
+            <!-- LEFT SIDE -->
+            <td style="width:50%; vertical-align:top;border:none;">
+                <p>
+                    <strong>Date:</strong>
+                    <span data-bind="DIREPORT_DATE"></span>
+                </p>
+                <p>
+                    <strong>Place:</strong>
+                    <span id="ORG_PLACE"></span>
+                </p>
+            </td>
+
+            <!-- RIGHT SIDE -->
+            <table1><td style="width:50%; vertical-align:top;border:none; ">
+                <p><strong>For <span class="company-name"></span> </strong></p>
+                <div id="signBlock"></div></table1>
+            </td>
+        </tr>
+    </table>
+</div>
+
+
+<h2>Notes</h2>
+
+<p>1. A member entitled to attend and vote at the meeting may appoint a proxy.</p>
+<p>2. Proxies must be deposited not less than forty-eight hours before the meeting.</p>
+<p>3. Corporate members shall submit Board Resolution under Section 113.</p>
+<p>4. Attendance slip must be produced at the meeting.</p>
+
+<!-- ===== Attendance Slip Template (hidden) ===== -->
+<div id="attendance-template" class="attendance" style="display:none;">
+    <h2>Attendance Slip</h2>
+
+    <p>(To be handed over at the entrance of the meeting hall)</p>
+
+    <p>
+        <strong>Annual General Meeting – 
+            <span class="agm-no"></span>
+        </strong>
+    </p>
+
+    <div class="line">
+        Full name of the member attending:
+        <strong class="sh-name"></strong>
+    </div>
+
+    <div class="line">
+        Number of shares held:
+        <strong class="sh-shares"></strong>
+    </div>
+
+    <div class="line">Name of Proxy:</div>
+
+    <p>
+        I hereby record my presence at the Annual General Meeting of
+        <strong><span class="company-name"></span></strong>,
+        at <strong><span class="Company-RegAddress"></span></strong>
+        on <strong><span data-bind="AGM.Dayofmeeting"></span></strong>.
+    </p>
+
+    <p style="margin-top:20pt;">
+        _________________________<br>
+        (Member’s / Proxy’s Signature)
+    </p>
+
+    <div style="page-break-after:always;"></div>
+</div>
+
+<div id="attendance-container"></div>
+
+
+
+
+
+
+<script>
+let authorisedDIN = null;
+let authorisedDesignation = null;
+
+let authorisedMode = false;
+//Signatures
+
+const signCount = document.getElementById('SIGN_COUNT');
+const signInputs = document.getElementById('signInputs');
+const signBlock = document.getElementById('signBlock');
+
+function renderSigns() {
+    signInputs.innerHTML = '';
+    signBlock.innerHTML = '';
+
+    if (!itr6) {
+        signInputs.innerHTML = '<em>Upload ITR JSON to load directors</em>';
+        return;
+    }
+
+    directorsFromJSON =
+        (itr6.PartA_GEN2For6?.KeyPersons || [])
+        .filter(p => p.Designation === "DIR")
+        .map(p => ({
+            name: p.PersonName,
+            din: p.DirectorIdNo
+        }));
+
+    if (!directorsFromJSON.length) {
+        signInputs.innerHTML = '<em>No directors found in JSON</em>';
+        return;
+    }
+// Populate Authorised Person dropdown
+const authSelect = document.getElementById("AUTH_PERSON");
+authSelect.innerHTML = '<option value="">-- Select Director --</option>';
+
+directorsFromJSON.forEach((d, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = `${d.name} (DIN: ${d.din})`;
+    authSelect.appendChild(opt);
+});
+
+
+    // Default SIGN_COUNT
+    if (!signCount.value || signCount.value < 1) {
+        signCount.value = directorsFromJSON.length;
+    }
+
+    const max = Math.min(
+        Number(signCount.value),
+        directorsFromJSON.length
+    );
+
+    for (let i = 0; i < max; i++) {
+        const d = directorsFromJSON[i];
+
+        const label = document.createElement('label');
+        label.style.display = "block";
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = true;
+        cb.onchange = updateSigns;
+
+        label.append(cb, ` ${d.name} (DIN: ${d.din})`);
+        signInputs.appendChild(label);
+    }
+
+    updateSigns();
+}
+
+function updateSigns() {
+    signBlock.innerHTML = '';
+
+    const checks = signInputs.querySelectorAll('input[type="checkbox"]');
+
+    checks.forEach((cb, idx) => {
+        if (!cb.checked) return;
+
+        const d = directorsFromJSON[idx];
+
+        // 🔥 Correct designation resolution
+        let desig = "Director";
+        if (authorisedDIN && d.din === authorisedDIN && authorisedDesignation) {
+            desig = authorisedDesignation;
+        }
+
+        signBlock.innerHTML += `
+            <p>
+                <strong>${d.name}</strong><br>
+                ${desig}<br>
+                DIN: ${d.din}
+            </p>
+        `;
+    });
+}
+signCount.addEventListener('change', renderSigns);
+
+
+
+
+function renderAttendanceSlips() {
+    const container = document.getElementById("attendance-container");
+    const template = document.getElementById("attendance-template");
+
+    container.innerHTML = "";
+
+    const holders =
+        itr6.ScheduleSH.ShrhldngUnlistedCompany.DtlsSHEndPreviousYearUC || [];
+
+    if (!holders.length) {
+        container.innerHTML =
+            "<p><em>No shareholder details found in Schedule SH.</em></p>";
+        return;
+    }
+
+    holders.forEach(sh => {
+        const slip = template.cloneNode(true);
+        slip.style.display = "block";
+        slip.removeAttribute("id");
+
+        slip.querySelector(".sh-name").textContent =
+            sh.ShareholderName || "__________";
+
+        slip.querySelector(".sh-shares").textContent =
+            sh.NumberOfSharesHeld != null
+                ? sh.NumberOfSharesHeld
+                : "__________";
+
+        container.appendChild(slip);
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+
+
+
+<!-- ================= SCRIPT ================= -->
+<script>
+
+
+let itr6 = null;
+let directorsFromJSON = [];
+
+
+function getOrdinalSuffix(n) {
+    n = Number(n);
+    if (!n) return "";
+
+    // 11, 12, 13 → th
+    if (n % 100 >= 11 && n % 100 <= 13) {
+        return "th";
+    }
+
+    switch (n % 10) {
+        case 1: return "st";
+        case 2: return "nd";
+        case 3: return "rd";
+        default: return "th";
+    }
+}
+
+function updateAGMOrdinal(n) {
+    document
+      .querySelectorAll(".agm-no")
+      .forEach(el => el.textContent = n || "___");
+
+    document
+      .querySelectorAll(".agm-suffix")
+      .forEach(el => el.textContent = n ? getOrdinalSuffix(n) : "");
+}
+</script>
+<script>
+document
+  .getElementById("AGM_MEETING_NO")
+  .addEventListener("input", function () {
+      updateAGMOrdinal(this.value);
+  });
+</script>
+
+
+<script>
+function setAuthorisedPerson() {
+    const sel = document.getElementById("AUTH_PERSON");
+    if (sel.value === "") return;
+
+    const d = directorsFromJSON[sel.value];
+
+    authorisedDIN = d.din; // 🔥 store DIN, not index
+
+    document.getElementById("AUTH_NAME").textContent = d.name;
+
+    if (authorisedDesignation) {
+        document.getElementById("AUTH_DESIG").textContent = authorisedDesignation;
+    }
+
+    updateSigns(); // re-render signature block
+}
+function updateAuthorisedDesignation() {
+    const desig = document.getElementById("AUTH_DESIG_SELECT").value;
+    if (!desig) return;
+
+    authorisedDesignation = desig;
+
+    document.getElementById("AUTH_DESIG").textContent = desig;
+
+    updateSigns(); // re-render signatures
+}
+function updateSignatureBlock(d) {
+    const desig =
+        document.getElementById("AUTH_DESIG_SELECT").value || "Director";
+
+    // Check if authorised person already exists in block
+    const existing = Array.from(signBlock.querySelectorAll("strong"))
+        .some(el => el.textContent.trim() === d.name);
+
+    if (existing) return; // 🔥 prevent duplicate
+
+    signBlock.innerHTML += `
+        <p>
+            <strong>${d.name}</strong><br>
+            ${desig}<br>
+            DIN: ${d.din}
+        </p>
+    `;
+}
+
+function exportToWord(){
+    // Clone body
+    const content = document.body.cloneNode(true);
+
+    // Remove control panel
+    const controls = content.querySelector(".controls");
+    if(controls) controls.remove();
+
+    // Word-compatible HTML wrapper
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body{
+    font-family:"Verdana",serif;
+    font-size:10pt;
+    line-height:1.5;
+    margin:2.54cm;
+    text-align:justify;
+}
+h1{
+    text-align:center;
+    font-size:12pt;
+    font-weight:bold;
+    text-decoration:underline;
+}
+h2{
+    font-size:10.5pt;
+    font-weight:bold;
+}
+table1{
+text-align:left;
+font-weight:bold;
+}
+
+</style>
+</head>
+<body>
+${content.innerHTML}
+</body>
+</html>`;
+
+    const blob = new Blob(
+        ['\ufeff', html],
+        { type: 'application/msword' }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "AGM_Notice.doc";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+</script>
+
+<script>
+function resetAllManualInputs() {
+    /* Clear all inputs with data-input */
+    document.querySelectorAll("[data-input]").forEach(input => {
+        input.value = "";
+    });
+
+    /* Clear number inputs */
+    const signCount = document.getElementById("SIGN_COUNT");
+    if (signCount) signCount.value = "";
+
+    /* Reset selects */
+    const authPerson = document.getElementById("AUTH_PERSON");
+    if (authPerson) authPerson.selectedIndex = 0;
+
+    const authDesig = document.getElementById("AUTH_DESIG_SELECT");
+    if (authDesig) authDesig.selectedIndex = 0;
+
+    /* Clear authorised person text */
+    const authName = document.getElementById("AUTH_NAME");
+    if (authName) authName.textContent = "_____";
+
+    const authDesigSpan = document.getElementById("AUTH_DESIG");
+    if (authDesigSpan) authDesigSpan.textContent = "_____";
+
+    /* Clear preview-bound spans */
+    document.querySelectorAll("[data-bind]").forEach(span => {
+        span.textContent = "";
+    });
+
+    /* Clear signature & attendance blocks */
+    const signBlock = document.getElementById("signBlock");
+    if (signBlock) signBlock.innerHTML = "";
+
+    const attendanceContainer =
+        document.getElementById("attendance-container");
+    if (attendanceContainer) attendanceContainer.innerHTML = "";
+
+    /* Hide AGM warning if present */
+    const warning = document.getElementById("AGM_WARNING");
+    if (warning) warning.style.display = "none";
+}
+
+function loadJSON(input){
+    const file = input.files[0];
+    if(!file) return;
+
+    // 🔥 Reset all manual inputs BEFORE loading JSON
+    resetAllManualInputs();
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+        const data = JSON.parse(e.target.result);
+        bindData(data);
+    };
+    reader.readAsText(file);
+}
+
+
+function formatAddressSingleLine(address){
+    if(!address) return "";
+
+    const exclude = [
+        "StateCode",
+        "CountryCode",
+        "CountryCodeMobile",
+        "MobileNo",
+        "EmailAddress"
+    ];
+
+    const parts = [];
+
+    for(const key in address){
+        if(exclude.includes(key)) continue;
+
+        if(key === "PinCode") continue; // append later
+
+        const value = address[key];
+        if(value !== null && value !== ""){
+            parts.push(value.toString().trim());
+        }
+    }
+
+    // Append PIN code at the end
+    if(address.PinCode){
+        parts.push("Pin Code – " + address.PinCode);
+    }
+
+    return parts.join(", ");
+}
+
+
+function bindData(json){
+
+    itr6 = json?.ITR?.ITR6;
+    if (!itr6) {
+        alert("ITR6 node not found");
+        return;
+    }
+
+    const CompanyName =
+        itr6.PartA_GEN1.OrgFirmInfo.AssesseeName.SurNameOrOrgName;
+
+    const address =
+        itr6.PartA_GEN1.OrgFirmInfo.Address;
+
+    const ay =
+        itr6.Form_ITR6.AssessmentYear;
+const place =
+        itr6.PartA_GEN1.OrgFirmInfo.Address.CityOrTownOrDistrict;
+
+    document.querySelectorAll(".company-name")
+  .forEach(el => el.textContent = CompanyName || "_____");
+document.querySelectorAll(".Company-RegAddress")
+  .forEach(el => el.textContent = formatAddressSingleLine(address));
+
+document.querySelectorAll(".AGM-Fy_End")
+  .forEach(el => el.textContent = ay || "_____");
+
+
+    document.getElementById("ORG_PLACE").textContent = place || "_____";
+
+
+
+    // 🔥 IMPORTANT: load directors now
+    renderSigns();
+renderAttendanceSlips();
+}
+
+</script>
+<script>
+/* ================= INPUT → PREVIEW BINDING ================= */
+
+document.querySelectorAll("[data-input]").forEach(input => {
+    const key = input.getAttribute("data-input");
+
+    input.addEventListener("input", () => {
+        let value = input.value;
+
+        // Format date nicely for documents
+        if (input.type === "date" && value) {
+            value = new Date(value).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric"
+            });
+        }
+
+        // Format time (optional but professional)
+        if (input.type === "time" && value) {
+            const [h, m] = value.split(":");
+            const hour = Number(h) % 12 || 12;
+            const ampm = Number(h) >= 12 ? "PM" : "AM";
+            value = `${hour}:${m} ${ampm}`;
+        }
+
+        document
+            .querySelectorAll(`[data-bind="${key}"]`)
+            .forEach(span => span.textContent = value || "_____");
+    });
+});
+</script>
+
+<script>
+/* ================= AGM DATE VALIDATION ================= */
+
+function checkAGMNoticeGap() {
+    const noticeInput = document.querySelector('[data-input="DIREPORT_DATE"]');
+    const agmInput = document.querySelector('[data-input="AGM.Dayofmeeting"]');
+    const warningBox = document.getElementById("AGM_WARNING");
+
+    if (!noticeInput.value || !agmInput.value) {
+        warningBox.style.display = "none";
+        return;
+    }
+
+    const noticeDate = new Date(noticeInput.value);
+    const agmDate = new Date(agmInput.value);
+
+    // Calculate difference in days
+    const diffTime = agmDate - noticeDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 21) {
+        warningBox.style.display = "block";
+        warningBox.innerHTML = `
+            ⚠️ <strong>Friendly reminder:</strong>
+            The AGM is scheduled <strong>${diffDays} day(s)</strong> after the
+            notice date. As per the Companies Act, at least
+            <strong>21 clear days</strong> notice is required.
+        `;
+    } else {
+        warningBox.style.display = "none";
+    }
+}
+
+/* Attach listeners */
+document
+  .querySelector('[data-input="DIREPORT_DATE"]')
+  .addEventListener("change", checkAGMNoticeGap);
+
+document
+  .querySelector('[data-input="AGM.Dayofmeeting"]')
+  .addEventListener("change", checkAGMNoticeGap);
+</script>
+
+</body>
+</html>

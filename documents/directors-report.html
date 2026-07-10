@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Directors' Report</title>
+
+<style>
+body{
+    font-family: "Trebuchet MS", serif;
+    font-size: 10pt;              /* Word unit */
+    line-height: 1.5;
+    margin: 2.54cm;               /* 1 inch – Word default */
+    text-align: justify;
+}
+
+/* Main heading */
+h1{
+    text-align: center;
+    font-size: 12pt;
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 18pt;
+}
+
+/* Section headings */
+h2{
+    text-align: left;
+    font-size: 10.5pt;
+    font-weight: bold;
+    margin-top: 18pt;
+    margin-bottom: 6pt;
+}
+
+/* Paragraphs */
+p{
+    margin-top: 0;
+    margin-bottom: 6pt;
+}
+
+/* Section spacing */
+.section{
+    margin-top: 12pt;
+}
+
+/* Tables – Word style */
+table{
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6pt;
+    margin-bottom: 12pt;
+}
+
+table, th, td{
+    border: 1px solid #000;
+}
+
+th{
+    font-weight: bold;
+    text-align: center;
+}
+
+th, td{
+    padding: 4pt 6pt;
+    vertical-align: middle;
+}
+
+.controls{ border:1px solid #999; padding:15px; margin-bottom:30px; background:#f5f5f5; } 
+.controls label{ display:inline-block; width:260px; font-weight:bold; } 
+.controls input,.controls select{ width:260px; margin-bottom:6px; }
+
+/* Page breaks */
+.page-break{
+    page-break-before: always;
+}
+
+/* Signature block */
+#signBlock p{
+    margin-top: 24pt;
+    margin-bottom: 0;
+    text-align: left;
+}
+
+.placeholder{
+    letter-spacing: 2px;
+    font-weight: normal;
+}
+
+.hidden{display:none;}
+@media print{.controls, .no-export {display:none !important;}}
+</style>
+</head>
+
+<body>
+
+<!-- ================= CONTROL PANEL ================= -->
+<div class="controls">
+<h3>Live Inputs (Auto-Preview)</h3>
+
+<label>Upload ITR JSON File:</label><br>
+<input type="file" id="jsonFile" accept=".json" onchange="loadITRJson()">
+<br><br>
+
+<label>Number of AGM :</label>
+<input type="number"
+       min="1"
+       id="AGM_MEETING_NO"
+       placeholder="Eg: 1, 2, 3">
+<br><br>
+
+    
+    
+<label>Amount in Rs.:</label>
+<select data-input="RS_COUNT">
+<option>Actual</option><option>Hundreads</option><option>Thousands</option><option>Lakhs</option>
+</select>
+<br>
+
+<label>Revenue (Previous FY):</label>
+<input id ="REV_PREV" data-input="REV_PREV" oninput="updateAffairs()"><br>
+
+<label>PBT (Previous FY):</label>
+<input data-input="PBT_PREV"><br>
+
+
+<label>TAX (Previous FY):</label>
+<input data-input="TAX_PREV"><br>
+
+
+<label>Deffered TAX (Previous FY):</label>
+<input data-input="DTAX_PREV"><br>
+
+<label>Income TAX Earlier Years (Current FY):</label>
+<input data-input="ETAX_CUR"><br>
+
+<label>Income TAX Earlier Years (Previous FY):</label>
+<input data-input="ETAX_PREV"><br>
+
+
+
+<label>PAT (Previous FY):</label>
+<input id="PTAX_PREV" data-input="PTAX_PREV" oninput="updateAffairs()"><br>
+
+    
+
+<hr>
+
+<label>Website available for the company:</label>
+<select data-toggle="AR" onchange="toggleAnnualReturn(this.value)">
+    <option value="">-- Select --</option>
+    <option value="A">Website available</option>
+    <option value="B">No website</option>
+</select>
+<br>
+
+<div id="AR_LINK_BOX" style="display:none;">
+    <label>Company Website Link:</label><br>
+    <input type="url"
+           id="ANNUAL_RETURN_LINK"
+           placeholder="https://www.company.com/annual-return"
+           style="width:100%;"
+           oninput="updateAnnualReturnLink()">
+    <br><br>
+</div>
+
+<label>Material Change occured:</label>
+<select data-toggle="MC" onchange="toggleMC(this.value)">
+    <option value="">-- Select --</option>
+    <option value="A">No Change</option>
+    <option value="B">Change occured</option>
+</select>
+
+
+<label>Change in Directors Clause:</label>
+<select data-toggle="DIR" onchange="toggleDIR(this.value)">
+    <option value="">-- Select --</option>
+    <option value="A">No Change</option>
+    <option value="B">Change occured</option>
+</select>
+<br>
+
+<label>Related Party Transactions:</label>
+<select data-toggle="RPT" onchange="toggleRPT(this.value)">
+    <option value="">-- Select --</option>
+    <option value="YES">Yes</option>
+    <option value="NO">No</option>
+</select>
+
+<div id="RPT_ANNEXURE_BOX" style="display:none; margin-top:6px;">
+    <label>Annexure No. for RPT Disclosure:</label><br>
+    <input type="text" id="RPT_ANNEXURE_INPUT" placeholder="_____"
+           oninput="updateRPTAnnexure(this.value)">
+</div>
+<br>
+
+<hr>
+<div>
+        <label>No. of Board Meetings Held:</label>
+        <input type="number" min="0" oninput="updateMeetingCount(this.value)">
+    </div>
+
+<div>
+        <label>No. of Signing Directors:</label>
+        <input id="SIGN_COUNT" type="number" min="1">
+</div>
+
+<label>Statutory Auditor Status:</label>
+<select data-toggle="AUDITOR" onchange="toggleAuditor(this.value)">
+    <option value="">-- Select --</option>
+    <option value="APPT">Appointment</option>
+    <option value="REAPPT">Re-appointment</option>
+</select>
+
+<div id="AUDITOR_INPUTS_APPT" style="display:none; margin-top:10px;">
+    <label>AGM Date of Appointment:</label>
+    <input type="text" placeholder="_____" oninput="bindText('AUD_APPT_DATE', this.value)"><br>
+ <label>Pending years of appointment:</label>
+    <input type="number" placeholder="_____" oninput="bindText('AUD_APPT_YEARS', this.value)"><br>   
+</div>
+
+<div id="AUDITOR_INPUTS_REAPPT" style="display:none; margin-top:10px;">
+     <label>Re appointment for how many years:</label>
+    <input type="number" placeholder="_____" oninput="bindText('AUD_REAPPT_YEARS', this.value)"><br>
+</div>
+
+<br>
+<label>Date of Directors report:</label>
+<input data-input="DIREPORT_DATE">
+
+
+
+<div id="signInputs"></div>
+
+<br>
+<button onclick="exportWord()">Export to Word</button>
+</div>
+
+<!-- ================= REPORT ================= -->
+
+<h1><u>Directors' Report</u></h1>
+
+<p align ="left">
+<strong>Dear Members,</strong><br></p>
+<p>
+The Board of Directors hereby present their
+<span class="agm-no"></span><sup class="agm-suffix"></sup> th Annual Report and the Audited Accounts
+for the year ended March 31,
+<span data-bind="FY_END_YEAR"></span>.
+</p>
+
+<div class="section">
+<h2>Financial Summary</h2>
+<p>The Company’s financial performance for the year ended March 31, <span data-bind="FY_END_YEAR"></span> is summarised below:</p>
+<p align=right >Rs in <span data-bind="RS_COUNT"></span></p>
+<table>
+<tr>
+<th>Particulars</th>
+<th><span data-bind="CURRENT_FY"></span></th>
+<th><span data-bind="PREVIOUS_FY"></span></th>
+</tr>
+
+
+<tr>
+<td>Revenue from Operations</td>
+<td><span data-bind="REV_CUR"></span></td>
+<td><span data-bind="REV_PREV"></span></td>
+</tr>
+<tr>
+<td>Profit Before Tax</td>
+<td><span data-bind="PBT_CUR"></span></td>
+<td><span data-bind="PBT_PREV"></span></td>
+</tr>
+<tr>
+<td>Less: Current Tax</td>
+<td><span data-bind="TAX_CUR"></span></td>
+<td><span data-bind="TAX_PREV"></span></td>
+</tr>
+
+<tr>
+<td>Deferred Tax</td>
+<td><span data-bind="DTAX_CUR"></span></td>
+<td><span data-bind="DTAX_PREV"></span></td>
+</tr>
+
+<tr>
+<td>Income Tax earlier years</td>
+<td><span data-bind="ETAX_CUR"></span></td>
+<td><span data-bind="ETAX_PREV"></span></td>
+</tr>
+
+<tr>
+<td>Profit For the Year</td>
+<td><span data-bind="PTAX_CUR"></span></td>
+<td><span data-bind="PTAX_PREV"></span></td>
+</tr>
+
+</table>
+</div><br>
+
+<div class="Section">
+<h2>State of Company’s Affairs</h2>
+
+<p align="Justify"><br>
+During the year under review your company did well. Your directors expect that the company will achieve new heights in the ensuing year. The total income for the financial year under review was Rs.<strong><span data-bind="REV_CUR"></span></strong>
+as against Rs.
+<strong><span data-bind="REV_PREV"></span></strong>
+for the previous financial year, registering an
+<strong><span data-bind="TI_TREND"></span></strong> of
+<strong><span data-bind="TI_PERCENT"></span>%</strong>.
+The profit after tax was Rs.
+<strong><span data-bind="PTAX_CUR"></span></strong>
+for the financial year under review as against Rs.
+<strong><span data-bind="PTAX_PREV"></span></strong>
+for the previous financial year, registering an
+<strong><span data-bind="PAT_TREND"></span></strong> of
+<strong><span data-bind="PAT_PERCENT"></span>%</strong>.
+</p>
+
+<div class="section">
+<h2>Extract of Annual Return</h2>
+<div class="Section" data-section="AR_A" style="display:none;">
+    <p>
+    Pursuant to Section 134(3)(a) of the Act, the draft annual return as on
+    <strong>31st March, <span data-bind="FY_END_YEAR"></span></strong>
+    prepared in accordance with Section 92(3) of the Act is made available on the
+    website of the Company and can be accessed using the link
+    <strong>
+        <a href="#" target="_blank" data-bind="ANNUAL_RETURN_LINK">
+            ___________
+        </a>
+    </strong>.
+    </p>
+</div>
+
+<div class="Section" data-section="AR_B" style="display:none;">
+<p align = "Justify">
+As per the provisions of the Companies (Amendment) Act, 2017, notified by the Ministry of Corporate Affairs on 31st July, 2018 read with notification dated 20th August, 2020 amending the provisions of section 134(3)(a) and section 92(3) of the Companies Act, 2013 respectively, further read with the Companies (Management and Administration) Amendment Rules, 2021 substituting Rule 12(1) of the Companies (Management and Administration) Rules, 2014, the requirement for preparing an extract of annual return to be made part of the Board’s Report has been omitted. Accordingly, extract of annual return in Form MGT-9 is not required to be annexed to the Board’s Report. Furthermore, the Company does not have any functional website for publication of the Annual Return.
+</p>
+</div>
+
+<h2>Meetings of the Board</h2>
+
+<p>
+    <span id="meetingText">_____</span> meetings of the Board of Directors were held during the year.
+    Details of the same are as follows:
+</p>
+
+<table>
+    <thead>
+        <tr>
+            <th rowspan="2">Name of the Directors</th>
+            <th colspan="2">Board Meetings</th>
+            <th rowspan="2">Attended Previous AGM</th>
+        </tr>
+        <tr>
+            <th>Held during the year</th>
+            <th>Attended during the year</th>
+        </tr>
+    </thead>
+    <tbody id="directorBody">
+        <tr>
+            <td class="name">_____</td>
+            <td>_____</td>
+            <td>_____</td>
+            <td>_____</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Directors' Responsibility Statement</h2>
+
+<p>
+Pursuant to requirement under sub-section (3) and (5) of Section 134 of the Companies Act, 2013, 
+with respect to Directors’ Responsibility Statement, your directors state that:
+</p>
+
+<ol type="i">
+    <li>
+        In the preparation of the Annual Accounts, the applicable accounting standards read with 
+        requirements set out under Schedule III to the Act, have been followed and there are no 
+        material departures from the same;
+    </li>
+    <li>
+        The directors have selected such accounting policies and applied them consistently and made 
+        judgements and estimates that are reasonable and prudent so as to give a true and fair view of 
+        the state of affairs of the company as at 31st March, <span data-bind="FY_END_YEAR"></span> and of the profit / loss of the 
+        company for that period;
+    </li>
+    <li>
+        The directors have taken proper and sufficient care for the maintenance of adequate accounting 
+        records in accordance with the provisions of the Act for safeguarding the assets of the company 
+        and for preventing and detecting fraud and other irregularities;
+    </li>
+    <li>
+        The directors have prepared the annual accounts on a ‘going concern’ basis.
+    </li>
+    <li>
+        The Company being unlisted, sub-clause (e) of Section 134(3) of the Companies Act, 2013, 
+        pertaining to laying down internal financial controls, is not applicable to the Company.
+    </li>
+    <li>
+        The directors have devised proper systems to ensure compliance with the provisions of all 
+        applicable laws and that such systems are adequate and operating effectively.
+    </li>
+</ol>
+
+<h2>Details in Respect of Frauds</h2>
+
+<p>
+The Auditor’s Report does not contain any remarks or information in relation to fraud.
+</p>
+
+<h2>Board’s Comment on the Auditors’ Report</h2>
+
+<p>
+The Auditor’s Report does not contain any qualifications, reservations, adverse remarks, or 
+disclaimers. Notes to accounts are self-explanatory and do not call for any further comments.
+</p>
+
+
+
+
+<h2>Material changes and commitments</h2>
+
+<div class="section" data-section="MC_A" style="display:none;" >
+<p align = "Justify">
+There was no change in the nature of business of the Company during the year. There are no other material changes and commitments in the business operations of the Company since the close of the financial year to the date of this Report.
+</p>
+</div>
+
+<div class="section" data-section="MC_B" style="display:none;" >
+<p align="Justify">
+Following material changes and commitments have occurred between the date of closure of the 
+financial year and the date of this Report and their impact on the financial position of the 
+company is not determinable.
+</p>
+
+<ol type="i">
+    <li><span class="placeholder">_________</span></li>
+    <li><span class="placeholder">_________</span></li>
+    <li><span class="placeholder">_________</span></li>
+</ol>
+
+<p align="Justify">
+The causes for such material changes and commitments as stated above and the remedial measures 
+taken by the company are given below:
+</p>
+
+<ol type="i">
+    <li><span class="placeholder">_________</span></li>
+    <li><span class="placeholder">_________</span></li>
+    <li><span class="placeholder">_________</span></li>
+</ol>
+</div>
+
+
+<h2>Change In Directors</h2>
+<div class="section" data-section="DIR_A" style="display:none;" >
+<p align ="Justify">
+There was no director who was appointed/ceased/re-elected/reappointed during the year under review. The structure of the board remains the same.
+</p>
+</div>
+
+
+<div class="section" id="DIR_B_SECTION" data-section="DIR_B" style="display:none;" >
+<p align ="Justify">
+During the period under review, changes as per below table has been made in the composition of Board of Director as per the declaration received from Directors under section 164 of the Companies Act, 2013 none of the director is disqualified
+</p>
+<table>
+    <thead>
+        <tr>
+            <th>Name of the Director</th>
+            <th>Particular of Change</th>
+            <th>Date of Appointment/Cessation</th>
+        </tr>
+    </thead>
+    <tbody id="directorchangeBody">
+        <tr>
+            <td>_____</td>
+            <td>_____</td>
+            <td>_____</td>
+            <td>_____</td>
+        </tr>
+    </tbody>
+</table>
+<button type="button" class="no-export" onclick="addDirectorChangeRow()">
+    ➕ Add Row
+</button>
+
+</div>
+
+<h2>Significant and Material Orders Passed by the Regulators / Courts / Tribunals</h2>
+
+<p>
+No significant and material orders were passed by the regulators or courts or tribunals which
+affect the going concern status and future operations of the Company.
+</p>
+
+
+
+<h2>Contracts and Arrangements with Related Parties</h2>
+
+<div id="RPT_YES" style="display:none;">
+    <p align = "justify">
+        All contracts/arrangements/transactions entered into by the Company during the financial year
+        with related parties were in the ordinary course of business and on an arm’s length basis.
+        Your directors draw attention of the members to
+        <strong>Annexure No. <span id="RPT_ANNEXURE_TEXT">_____</span></strong>
+        to the financial statements which sets out related party disclosures.
+    </p>
+</div>
+
+<div id="RPT_NO" style="display:none;">
+    <p>
+        There are no contracts/arrangements with the related parties during the year.
+    </p>
+</div>
+
+
+
+<h2>Secretarial standards</h2>
+<p>The Company has Complied with the applicable Secretarial Standards on meetings of the Board of Directors and shareholders issued by The Institute of Company Secretaries of India and approved by Central Government under Section 118(10) of the Companies Act, 2013.</P>
+
+<h2>Deposit</h2>
+<p>During the year under review, the Company has not accepted any deposits falling within the ambit of section 73 of the Companies Act, 2013 and the rules framed there under.</p>
+
+<h2>Loans and Investments</h2>
+<p>The Company has not made any investments, given guarantees, and provided securities during the financial year under review. Therefore, there is no need to comply with the provisions of Section 186 of the Companies Act, 2013.</p>
+
+
+<h2>Auditor</h2>
+<h2>Statutory auditors -</h2>
+
+<!-- APPOINTMENT -->
+<div id="AUDITOR_APPT" style="display:none;">
+    <p>
+        At the Annual General Meeting held on
+        <strong><span id="AUD_APPT_DATE">_____</span></strong>,
+        M/s MARV & CO </strong>,
+        Chartered Accountants, <strong> Ayyanthole,Thrissur 680003 </strong>
+        were appointed as Statutory Auditors of the Company to hold office till the
+        conclusion of the Annual General Meeting to be held in the calendar year
+        <strong><span id="AUD_TERM_END_YEAR">_____</span></strong>.
+    </p>
+
+    <p>
+        In terms of the provisions of the Companies (Amendment) Act, 2017, the term of
+        the auditors does not require ratification every year. In this regard, the
+        Company has received a certificate from the auditors of eligibility in
+        accordance with Sections 139, 141 and other applicable provisions of the
+        Companies Act, 2013 and Rules issued thereunder.
+    </p>
+</div>
+
+<!-- RE-APPOINTMENT -->
+<div id="AUDITOR_REAPPT" style="display:none;">
+    <p>
+        Auditors of the Company M/s MARV & CO </strong>
+        hold office until the conclusion of the ensuing Annual General Meeting and,
+        being eligible, offer themselves for re-appointment until the conclusion of
+        the <strong><span id="ANNUAL_REPORT_END_NUMBER"></span></strong>
+        th Annual General Meeting of the Company to be held in the year
+        <strong><span id="REAUD_TERM_END_YEAR">_____</span></strong>.
+  
+        As required under the provisions of Section 139(1) of the Companies Act, 2013,
+        the Company has received a written consent from M/s MARV & CO </strong> to their re-appointment
+        and a certificate to the effect that their re-appointment, if made, would be in
+        accordance with the Act and the Rules framed thereunder and that they satisfy
+        the criteria provided in Section 141 of the Companies Act, 2013.
+    </p>
+</div>
+
+<h2>Disclosures under Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013</h2>
+<p>The Company has in place an Anti Sexual Harassment Policy in line with the requirements of The Sexual Harassment of Women at the Workplace (Prevention, Prohibition & Redressal) Act, 2013. All employees (permanent, contractual, temporary & trainees) are covered under this policy.
+No cases were reported pursuant to the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013.</p>
+
+<h2>Acknowledgement:</h2>
+<p>Your Directors place on record their deep appreciation to employees at all levels for their hard work, dedication and commitment. The Board places on record its appreciation for the support and co-operation, your company has been receiving from its Suppliers, Retailers, Dealers & Distributors and others associated with the Company. The Directors also take this opportunity to thank all Clients, Vendors, Banks, Government and Regulatory Authorities for their continued support.</p>
+
+
+<div class="section">
+    <table style="width:100%; border-collapse:collapse; border:none;">
+        <tr>
+            <!-- LEFT SIDE -->
+            <td style="width:50%; vertical-align:top;border:none;">
+                <p>
+                    <strong>Date:</strong>
+                    <span data-bind="DIREPORT_DATE"></span>
+                </p>
+                <p>
+                    <strong>Place:</strong>
+                    <span id="ORG_PLACE"></span>
+                </p>
+            </td>
+
+            <!-- RIGHT SIDE -->
+            <td style="width:50%; vertical-align:top;border:none;">
+                <p><strong>For & on behalf of the Board</strong></p>
+                <div id="signBlock"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- ==== SIGNATURES ==== -->
+
+<script>
+const signCount = document.getElementById('SIGN_COUNT');
+const signInputs = document.getElementById('signInputs');
+const signBlock = document.getElementById('signBlock');
+
+function renderSigns() {
+    signInputs.innerHTML = '';
+    signBlock.innerHTML = '';
+
+    if (!directorsFromJSON.length) {
+        signInputs.innerHTML = '<em>Upload ITR JSON to load directors</em>';
+        return;
+    }
+
+    const max = Math.min(signCount.value, directorsFromJSON.length);
+
+    // Show selectable checkboxes
+    for (let i = 0; i < max; i++) {
+        const d = directorsFromJSON[i];
+
+        const label = document.createElement('label');
+        label.style.display = "block";
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = true;
+        cb.onchange = updateSigns;
+
+        label.append(cb, ` ${d.name} (DIN: ${d.din})`);
+        signInputs.appendChild(label);
+    }
+
+    updateSigns();
+}
+
+function updateSigns() {
+    signBlock.innerHTML = '';
+
+    const checks = signInputs.querySelectorAll('input[type="checkbox"]');
+
+    checks.forEach((cb, i) => {
+        if (cb.checked) {
+            const d = directorsFromJSON[i];
+            signBlock.innerHTML += `
+                <p>
+                    <strong>${d.name}</strong><br>
+                    Director<br>
+                    DIN: ${d.din}
+                </p>
+            `;
+        }
+    });
+}
+
+signCount.addEventListener('change', renderSigns);
+
+</script>
+
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+let directorsFromJSON = [];
+let boardMeetingsHeld = "";
+</script>
+
+<script>
+function toggleAuditor(val){
+    document.getElementById("AUDITOR_APPT").style.display = "none";
+    document.getElementById("AUDITOR_REAPPT").style.display = "none";
+    document.getElementById("AUDITOR_INPUTS_APPT").style.display = "none";
+    document.getElementById("AUDITOR_INPUTS_REAPPT").style.display = "none";
+
+    if(val === "APPT"){
+        document.getElementById("AUDITOR_APPT").style.display = "block";
+        document.getElementById("AUDITOR_INPUTS_APPT").style.display = "block";
+    }
+
+    if(val === "REAPPT"){
+        document.getElementById("AUDITOR_REAPPT").style.display = "block";
+        document.getElementById("AUDITOR_INPUTS_REAPPT").style.display = "block";
+    }
+}
+function getOrdinalSuffix(n) {
+    n = Number(n);
+    if (!n) return "";
+
+    // 11, 12, 13 → th
+    if (n % 100 >= 11 && n % 100 <= 13) {
+        return "th";
+    }
+
+    switch (n % 10) {
+        case 1: return "st";
+        case 2: return "nd";
+        case 3: return "rd";
+        default: return "th";
+    }
+}
+
+function updateAGMOrdinal(n) {
+    document
+      .querySelectorAll(".agm-no")
+      .forEach(el => el.textContent = n || "___");
+
+    document
+      .querySelectorAll(".agm-suffix")
+      .forEach(el => el.textContent = n ? getOrdinalSuffix(n) : "");
+}
+</script>
+<script>
+document
+  .getElementById("AGM_MEETING_NO")
+  .addEventListener("input", function () {
+      updateAGMOrdinal(this.value);
+  });
+</script>
+
+<script>
+function bindText(id, val){
+
+    // direct placeholder update (dates, text)
+    const el = document.getElementById(id);
+    if (el) el.textContent = val || "_____";
+
+    const fyText = document.querySelector('[data-bind="FY_END_YEAR"]')?.textContent;
+    const amText = document.querySelector('[data-input="ANNUAL_REPORT_NUMBER"]')?.value;
+
+
+    const fy = parseInt(fyText?.trim(), 10);
+    const years = parseInt(val, 10);
+    const AM = parseInt(amText?.trim(), 10);
+
+    /* ===== Appointment ===== */
+    if (id === "AUD_APPT_YEARS") {
+        document.getElementById("AUD_TERM_END_YEAR").textContent =
+            Number.isInteger(fy) && Number.isInteger(years)
+            ? fy + years
+            : "_____";
+    }
+
+    /* ===== Re-appointment ===== */
+    if (id === "AUD_REAPPT_YEARS") {
+        document.getElementById("REAUD_TERM_END_YEAR").textContent =
+            Number.isInteger(fy) && Number.isInteger(years)
+            ? fy + years
+            : "_____";
+
+        document.getElementById("ANNUAL_REPORT_END_NUMBER").textContent =
+            Number.isInteger(AM) && Number.isInteger(years)
+            ? AM + years
+            : "_____";
+    }
+}
+</script>
+
+<script>
+function resetUserInputsOnJsonLoad(){
+
+    /* ===== 1. Clear all text / number / date / url inputs ===== */
+    document
+        .querySelectorAll('.controls input:not([type="file"])')
+        .forEach(inp => inp.value = "");
+
+    /* ===== 2. Reset all selects ===== */
+    document
+        .querySelectorAll('.controls select')
+        .forEach(sel => sel.selectedIndex = 0);
+
+    /* ===== 3. Clear all data-bind fields (user-entered only) ===== */
+    const jsonBoundKeys = [
+        "FY_END_YEAR",
+        "CURRENT_FY",
+        "PREVIOUS_FY",
+        "REV_CUR",
+        "PBT_CUR",
+        "TAX_CUR",
+        "DTAX_CUR",
+        "PTAX_CUR"
+    ];
+
+    document.querySelectorAll('[data-bind]').forEach(el => {
+        if (!jsonBoundKeys.includes(el.dataset.bind)) {
+            el.textContent = "_____";
+        }
+    });
+
+    /* ===== 4. Clear auditor calculated fields ===== */
+    [
+        "AUD_TERM_END_YEAR",
+        "REAUD_TERM_END_YEAR",
+        "ANNUAL_REPORT_END_NUMBER",
+        "AUD_APPT_DATE"
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "_____";
+    });
+
+    /* ===== 5. Hide all toggle sections ===== */
+    document.querySelectorAll('[data-section]').forEach(sec => {
+        sec.style.display = "none";
+    });
+
+    /* ===== 6. Reset toggle selectors ===== */
+    ["AR", "MC", "DIR", "RPT", "AUDITOR"].forEach(tg => {
+        const sel = document.querySelector(`[data-toggle="${tg}"]`);
+        if (sel) sel.value = "";
+    });
+
+    /* ===== 7. Reset board meetings ===== */
+    boardMeetingsHeld = "";
+    const mt = document.getElementById("meetingText");
+    if (mt) mt.textContent = "_____";
+
+    /* ===== 8. Reset director tables (will be rebuilt from JSON) ===== */
+    document.getElementById("directorBody").innerHTML = "";
+    document.getElementById("directorchangeBody").innerHTML = "";
+
+    /* ===== 9. Reset signatures ===== */
+    document.getElementById("signInputs").innerHTML = "";
+    document.getElementById("signBlock").innerHTML = "";
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+function updateMeetingCount(val){
+    boardMeetingsHeld = val || "";
+    document.getElementById("meetingText").textContent = val || "_____";
+ syncMeetingsHeldToTable();
+}
+
+</script>
+
+<script>
+
+
+function addDirectorChangeRow() {
+    const tbody = document.getElementById("directorchangeBody");
+    tbody.appendChild(generateDirectorChangeRow());
+}
+
+function generateDirectorChangeRow() {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+        <td data-val="">
+            <input type="text" placeholder="_____"
+                   oninput="this.closest('td').dataset.val=this.value">
+        </td>
+
+        <td data-val="">
+            <select onchange="this.closest('td').dataset.val=this.value">
+                <option value="">_____</option>
+                <option value="Appointment">Appointment</option>
+                <option value="Cessation">Cessation</option>
+            </select>
+        </td>
+
+        <td data-val="">
+            <input type="date"
+                   oninput="this.closest('td').dataset.val=this.value">
+        </td>
+    `;
+
+    return tr;
+}
+
+
+function generateDirectorchange() {
+    const tbody = document.getElementById("directorchangeBody");
+    tbody.innerHTML = "";               // clear existing
+    tbody.appendChild(generateDirectorChangeRow());
+}
+
+</script>
+<script>
+function toggleRPT(value) {
+    document.getElementById("RPT_YES").style.display = "none";
+    document.getElementById("RPT_NO").style.display = "none";
+    document.getElementById("RPT_ANNEXURE_BOX").style.display = "none";
+
+    if (value === "YES") {
+        document.getElementById("RPT_YES").style.display = "block";
+        document.getElementById("RPT_ANNEXURE_BOX").style.display = "block";
+    }
+
+    if (value === "NO") {
+        document.getElementById("RPT_NO").style.display = "block";
+    }
+}
+
+function updateRPTAnnexure(val) {
+    document.getElementById("RPT_ANNEXURE_TEXT").textContent = val || "_____";
+}
+</script>
+
+
+
+
+<script>
+
+function generateDirectorRowsFromJSON(){
+    const tbody = document.getElementById("directorBody");
+    tbody.innerHTML = "";
+
+    if(directorsFromJSON.length === 0){
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4">_____</td>
+            </tr>`;
+        return;
+    }
+
+    directorsFromJSON.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td class="name" data-val="${d.name}">${d.name}
+            </td>
+            <td class="name" data-role="meetings-held" data-val="_____">_____</td>
+            <td data-val="">
+                <input type="number" min="0" placeholder="_____"
+                       oninput="this.closest('td').dataset.val=this.value">
+            </td>
+            <td data-val="">
+                <select onchange="this.closest('td').dataset.val=this.value">
+                    <option value="">_____</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+syncMeetingsHeldToTable();
+}
+
+function syncMeetingsHeldToTable(){
+    document
+        .querySelectorAll('#directorBody td[data-role="meetings-held"]')
+        .forEach(td => {
+            td.dataset.val = boardMeetingsHeld;
+            td.textContent = boardMeetingsHeld || "_____";
+        });
+}
+
+
+function loadITRJson() {
+
+if (!confirm("Uploading JSON will clear all entered data. Continue?")) {
+    return;
+}
+
+
+resetUserInputsOnJsonLoad(); // 🔥 CLEAR FIRST
+
+    const fileInput = document.getElementById("jsonFile");
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const json = JSON.parse(e.target.result);
+            bindFYFromITR(json);
+        } catch (err) {
+    console.error("JSON processing failed:", err);
+    alert(err.message);
+}
+    };
+    reader.readAsText(file);
+
+
+}
+
+function bindFYFromITR(json) {
+
+    const itr6 = json?.ITR?.ITR6;
+    if (!itr6) {
+        alert("ITR6 node not found");
+        return;
+    }
+
+    const ay = Number(itr6.Form_ITR6?.AssessmentYear);
+    if (!ay) {
+        alert("Assessment Year missing");
+        return;
+    }
+
+  // PLACE
+    const place =
+        json.ITR.ITR6.PartA_GEN1.OrgFirmInfo.Address.CityOrTownOrDistrict;
+
+    document.getElementById("ORG_PLACE").textContent = place || "_____";
+
+
+
+
+ // ✅ CORRECT director extraction
+    directorsFromJSON = (itr6.PartA_GEN2For6?.KeyPersons || [])
+        .filter(p => p.Designation === "DIR")
+        .map(p => ({
+            name: p.PersonName,
+            din: p.DirectorIdNo
+        }));
+
+    // refresh signature UI AFTER data is ready
+    renderSigns();    const revenue = itr6.PARTA_PL.CreditsToPL.TotCreditsToPL;
+    const pbt = itr6.PARTA_PL.DebitsToPL.DebitPlAcnt.PBT;
+    const currentTax = itr6.PARTA_PL.DebitsToPL.TaxProvAppr.ProvForCurrTax;
+    const deferredTax = itr6.PARTA_PL.DebitsToPL.TaxProvAppr.ProvDefTax;
+    const pat = itr6.PARTA_PL.DebitsToPL.TaxProvAppr.ProfitAfterTax;
+    
+       const bindings = {
+        FY_END_YEAR: ay,
+        CURRENT_FY: `31-03-${ay}`,
+        PREVIOUS_FY: `31-03-${ay - 1}`,
+        REV_CUR: revenue,
+        PBT_CUR: pbt,
+        TAX_CUR: currentTax,
+        DTAX_CUR: deferredTax,
+        PTAX_CUR: pat
+	
+    };
+
+    // Apply bindings globally
+    document.querySelectorAll("[data-bind]").forEach(el => {
+        const key = el.dataset.bind;
+        if (bindings[key] !== undefined) {
+            el.textContent = bindings[key];
+        }
+    });
+
+generateDirectorRowsFromJSON();
+
+}
+</script>
+<script>
+function bindFYFromPlace(json) {
+
+    const place =
+        json?.ITR
+            ?.ITR6
+            ?.PartA_GEN1
+            ?.OrgFirmInfo
+            ?.Address
+            ?.CityOrTownOrDistrict;
+
+    document.getElementById("ORG_PLACE").textContent = place || "_____";
+}
+</script>
+
+
+
+
+<script>
+function toggleAnnualReturn(value) {
+
+    // Hide everything first
+    document.querySelectorAll('[data-section^="AR_"]').forEach(d => d.style.display = "none");
+    document.getElementById("AR_LINK_BOX").style.display = "none";
+
+    if (value === "A") {
+        document.querySelector('[data-section="AR_A"]').style.display = "block";
+        document.getElementById("AR_LINK_BOX").style.display = "block";
+    }
+
+    if (value === "B") {
+        document.querySelector('[data-section="AR_B"]').style.display = "block";
+    }
+}
+function toggleMC(value) {
+
+    // Hide everything first
+    document.querySelectorAll('[data-section^="MC_"]').forEach(d => d.style.display = "none");
+
+    if (value === "A") {
+        document.querySelector('[data-section="MC_A"]').style.display = "block";
+    
+    }
+
+    if (value === "B") {
+        document.querySelector('[data-section="MC_B"]').style.display = "block";
+    }
+}
+
+function toggleDIR(value) {
+
+    // Hide everything first
+    document.querySelectorAll('[data-section^="DIR_"]').forEach(d => d.style.display = "none");
+
+    if (value === "A") {
+        document.querySelector('[data-section="DIR_A"]').style.display = "block";
+    
+    }
+
+    if (value === "B") {
+        document.querySelector('[data-section="DIR_B"]').style.display = "block";
+        generateDirectorchange()
+    }
+}
+
+
+function updateAnnualReturnLink() {
+    const link = document.getElementById("ANNUAL_RETURN_LINK").value;
+
+    document.querySelectorAll('[data-bind="ANNUAL_RETURN_LINK"]').forEach(el => {
+        el.textContent = link || "___________";
+        el.href = link || "#";
+    });
+}
+</script>
+
+
+<script>
+function calcPercent(curr, prev) {
+    if (!prev || prev === 0) return 0;
+    return (((curr - prev) / prev) * 100).toFixed(2);
+}
+
+function numFromBind(key) {
+    const el = document.querySelector(`[data-bind="${key}"]`);
+    return el ? Number(el.textContent.replace(/,/g, "")) : 0;
+}
+
+function updateAffairs() {
+    const tiCurr = numFromBind("REV_CUR");
+    const tiPrev = Number(document.querySelector('[data-input="REV_PREV"]')?.value || 0);
+
+    const patCurr = numFromBind("PTAX_CUR");
+    const patPrev = Number(document.querySelector('[data-input="PTAX_PREV"]')?.value || 0);
+
+    const tiPercent = calcPercent(tiCurr, tiPrev);
+    const patPercent = calcPercent(patCurr, patPrev);
+
+    const bindings = {
+        TI_PERCENT: Math.abs(tiPercent),
+        TI_TREND: tiCurr >= tiPrev ? "increase" : "decrease",
+        PAT_PERCENT: Math.abs(patPercent),
+        PAT_TREND: patCurr >= patPrev ? "increase" : "decrease"
+    };
+
+    document.querySelectorAll("[data-bind]").forEach(el => {
+        const key = el.dataset.bind;
+        if (bindings[key] !== undefined) {
+            el.textContent = bindings[key];
+        }
+    });
+}
+</script>
+
+
+<script>
+function updateBindings() {
+    const fy = document.getElementById("FY_END_YEAR").value;
+    if (!fy) return;
+
+    const bindings = {
+        FY_END_YEAR: fy,
+        CURRENT_FY: `31-03-${fy}`,
+        PREVIOUS_FY: `31-03-${fy - 1}`,
+       
+    };
+
+    document.querySelectorAll("[data-bind]").forEach(el => {
+        const key = el.dataset.bind;
+        if (bindings.hasOwnProperty(key)) {
+            el.textContent = bindings[key];
+        }
+    });
+}
+</script>
+
+<script>
+/* ==== LIVE BINDING ==== */
+document.querySelectorAll('[data-input]').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+        document.querySelectorAll(`[data-bind="${inp.dataset.input}"]`)
+        .forEach(el=>el.textContent=inp.value);
+    });
+});
+
+/* ==== OR-BLOCK TOGGLES ==== */
+function toggle(group,val){
+    document.querySelectorAll(`[data-section^="${group}_"]`)
+        .forEach(d => d.style.display = "none");
+
+    if(val){
+        const el = document.querySelector(`[data-section="${group}_${val}"]`);
+        if(el) el.style.display = "block";
+    }
+}
+document.querySelectorAll('[data-toggle]').forEach(sel=>{
+    // Skip MC – it has its own handler
+    if (sel.dataset.toggle === "MC") return;
+
+    sel.addEventListener('change',e=>toggle(e.target.dataset.toggle,e.target.value));
+    toggle(sel.dataset.toggle,sel.value);
+});
+
+
+
+/* ==== WORD EXPORT ==== */
+
+function prepareForWordExport() {
+    // Replace all inputs
+    document.querySelectorAll('td input, td select').forEach(ctrl => {
+        const td = ctrl.closest('td');
+        const val = td.dataset.val || "_____";
+        td.textContent = val;
+    });
+}
+
+function exportWord() {
+
+    // 🔹 Clone the document (never touch live UI)
+    const clone = document.documentElement.cloneNode(true);
+
+    /* =================================================
+       1. REMOVE UI / INPUT PANELS COMPLETELY
+       ================================================= */
+
+    // Remove entire control panel
+    clone.querySelectorAll('.controls').forEach(el => el.remove());
+
+    // Remove Add Row buttons or any UI-only helpers
+    clone.querySelectorAll('.no-export').forEach(el => el.remove());
+
+    // Remove stray labels (safety net)
+    clone.querySelectorAll('label').forEach(el => el.remove());
+
+/* =================================================
+   REMOVE DIRECTOR CHANGE TABLE IF NOT APPLICABLE
+   ================================================= */
+
+const dirSelection = document.querySelector('[data-toggle="DIR"]')?.value;
+
+if (dirSelection === "A") {
+    const dirChangeSection = clone.querySelector('#DIR_B_SECTION');
+    if (dirChangeSection) dirChangeSection.remove();
+}
+
+
+    /* =================================================
+       2. CONVERT TABLE INPUTS → TEXT
+       ================================================= */
+
+    clone.querySelectorAll('td input, td select').forEach(ctrl => {
+        const td = ctrl.closest('td');
+        const val = td?.dataset?.val || "_____";
+        if (td) td.textContent = val;
+    });
+
+    /* =================================================
+       3. CREATE WORD FILE
+       ================================================= */
+
+    const blob = new Blob(
+        ['\ufeff', clone.outerHTML],
+        { type: 'application/msword' }
+    );
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Directors_Report.doc';
+    a.click();
+}
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    toggleMC(document.querySelector('[data-toggle="MC"]').value);
+    toggleDIR(document.querySelector('[data-toggle="DIR"]').value);
+    toggleAnnualReturn(document.querySelector('[data-toggle="AR"]').value);
+    toggleRPT(document.querySelector('[data-toggle="RPT"]').value);
+    toggleAuditor(document.querySelector('[data-toggle="AUDITOR"]').value);
+
+});
+</script>
+
+</body>
+</html>  

@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Management Representation Letter</title>
+
+<style>
+body{
+    font-family:"Trebuchet MS", serif;
+    font-size:10pt;
+    line-height:1.5;
+    margin:2.54cm;
+    text-align:justify;
+}
+
+/* ================= CONTROL PANEL ================= */
+.controls{
+    border:1px solid #999;
+    padding:15px;
+    margin-bottom:30px;
+    background:#f5f5f5;
+}
+.controls h3{
+    margin-top:0;
+}
+.controls label{
+    display:inline-block;
+    width:260px;
+    font-weight:bold;
+}
+.controls input{
+    width:260px;
+    margin-bottom:6px;
+}
+
+/* Hide controls while printing / Word export */
+@media print{
+    .controls{ display:none; }
+}
+
+/* Headings */
+h3{
+    
+    font-size:12pt;
+    font-weight:bold;
+}
+.section{
+    margin-top:14pt;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8pt;
+}
+th,td{
+    border:1px solid #000;
+    padding:4pt;
+}
+.hidden{ display:none; }
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN GATE (client-side prototype) -->
+<div id="loginForm" style="margin:2.54cm; border:1px solid #999; padding:12px; background:#fff;">
+  <h3>Enter credentials to open document</h3>
+  <label style="display:inline-block;width:80px">User</label>
+  <input id="auth_user" type="text" style="width:200px"><br><br>
+  <label style="display:inline-block;width:80px">Password</label>
+  <input id="auth_pass" type="password" style="width:200px"><br><br>
+  <button type="button" onclick="checkCredentials()">Open</button>
+  <span id="auth_msg" style="color:#b30000; margin-left:12px;"></span>
+</div>
+
+<!-- Protected content (hidden until auth) -->
+<div id="protectedContent" style="display:none;">
+
+<!-- ================= SCRIPT ================= -->
+<script>
+// --- CLIENT-SIDE AUTH (inserted at top of existing script) ---
+/*
+ Replace the two hex strings below with SHA-256 hex digests of your chosen
+ username and password. Do NOT store plaintext here if you want minimal obscurity.
+ To compute a digest quickly in browser console after loading the file, run:
+   (async function h(s){const a=new TextEncoder().encode(s);const d=await crypto.subtle.digest('SHA-256',a);
+    console.log(Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join(''))})('your-secret')
+*/
+const USER_HASH = '41e0660aa2975f3f8338a316caba1b5f97ecc1afaee73790e6b3a1b7ae3f530c';
+const PASS_HASH = '369a5fe60e29dcb8e7c3bde3be2573b7b9ee969f7b0e7f289ed16f0018952933';
+
+async function sha256Hex(text){
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkCredentials(){
+  const u = document.getElementById('auth_user').value || '';
+  const p = document.getElementById('auth_pass').value || '';
+  document.getElementById('auth_msg').textContent = '';
+  try{
+    const uh = await sha256Hex(u);
+    const ph = await sha256Hex(p);
+    if(uh === USER_HASH && ph === PASS_HASH){
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('protectedContent').style.display = 'block';
+      // initialize page state (existing reset function is defined later in file)
+      if(typeof resetBeforeJSONLoad === 'function') resetBeforeJSONLoad();
+      return;
+    }
+    document.getElementById('auth_msg').textContent = 'Invalid credentials';
+  }catch(e){
+    console.error(e);
+    document.getElementById('auth_msg').textContent = 'Error';
+  }
+}
+
+</script>
+
+
+<!-- ================= CONTROL PANEL ================= -->
+<div class="controls">
+<h3>Management Representation – Input Panel</h3>
+
+<label><strong>Upload JSON File:</strong></label><br>
+<input type="file" accept=".json" onchange="loadJSON(this)"><br>
+
+<label>Assets – Title Status:</label>
+<select data-toggle="AT" onchange="toggleAssetTitle(this.value)">
+    <option value="">-- Select --</option>
+    <option value="NCHG">No Charge</option>
+    <option value="CHG">Charge</option>
+</select><br><br>
+
+<label>PPE Note no in Financials:</label>
+<input data-input="PPE_NOTE"><br>
+
+<label>Does the Company have Investments?</label>
+<select onchange="toggleInvestments(this.value)">
+    <option value="">-- Select --</option>
+    <option value="YES">Yes</option>
+    <option value="NO">No</option>
+</select>
+<br>
+
+<p id="INV_WARN" style="color:#b30000; font-weight:bold; display:none;">
+⚠ Investments selected as YES, but total investment value in JSON is ZERO.
+</p>
+
+<label>Inventory Note no in Financials:</label>
+<input data-input="INVENT_NOTE"><br>
+
+<label>Trade Receivable Note no:</label>
+<input data-input="TR_NOTE"><br>
+
+<label>Loans Note no:</label>
+<input data-input="LA_NOTE"><br>
+
+<label>Cash Flow Method:</label>
+<select onchange="setCashFlowMethod(this.value)">
+    <option value="">-- Select Method --</option>
+    <option value="Direct">Direct</option>
+    <option value="Indirect">Indirect</option>
+</select><br>
+
+
+    <label>Signatory Director:</label>
+    <select id="SIGN_DIRECTOR" onchange="renderSignatories()">
+        <option value="">-- Select --</option>
+        <option value="ALL">All Directors</option>
+    </select><br>
+
+    <label>Designation:</label>
+    <select id="SIGN_DESIGNATION" onchange="renderSignatories()">
+        <option value="Director">Director</option>
+        <option value="Managing Director">Managing Director</option>
+        <option value="Whole-time Director">Whole-time Director</option>
+    </select><br>
+
+    <input type="text"
+       placeholder="DD/MM/YYYY"
+       oninput="renderDate(this.value)">
+
+    <br>
+<br>
+<button type="button" onclick="exportToWord()">
+    Export to Word (.doc)
+</button>
+
+</div>
+
+<!-- ================= DOCUMENT ================= -->
+
+<p>To<br>
+<h3><p align = "Left">MARV & CO Chartered Accountants</p><br>
+Puthurkara,Ayyanthole<br>
+Thrissur 680003</body></h3></html>
+
+<p><h3>Dear Sir,</h3></p>
+
+<p><h3>Sub: Representation for the purpose of audit for the FY <span data-bind="FY_YEAR"></span></h3></p>
+
+<p>
+This representation letter is provided in connection with your audit of the financial statements of
+<strong><span data-bind="COMPANY_NAME"></span></strong>
+for the year ended 31.03.<span data-bind="FY_END_YEAR"></span> for the purpose of expressing an opinion as to whether the financial statements give a true and fair view of the financial position and of the results of operations for the year end. We acknowledge our responsibility for preparation of financial statements in accordance with the requirements of the Companies Act, 2013 and recognized accounting policies and practices, including the Accounting Standards issued by the Institute of Chartered Accountants of India.
+</p><p>
+This responsibility also includes the maintenance of adequate accounting records in accordance with the provisions of the Act for safeguarding of the assets of the Company and for preventing and detecting the frauds and other irregularities; selection and application of appropriate accounting policies; making judgments and estimates that are reasonable and prudent; and design, implementation and maintenance of internal financial control, that were operating effectively for ensuring the accuracy and completeness of the accounting records, relevant to the preparation and presentation of the financial statements that give a true and fair view and are free from material misstatement, whether due to fraud or error.</p>
+<p>We confirm, to the best of our knowledge and belief, the following representations;</p>
+
+<h3>Accounting Policies</h3>
+
+<p>The accounting policies, which are material or critical in determining the results of operations for the year and financial positions, are set out in the financial statements. The financial statements are prepared on accrual basis except as stated otherwise/</P>
+<p>The financial statements are prepared on a going concern basis.</P>
+
+
+<div class="section">
+<h3>Assets</h3>
+
+<p>
+All the assets of the Company are correctly classified into Current and Non-Current based upon
+the criteria as set out in Schedule III to the Companies Act, 2013. Also, the requirements of the
+Accounting Standards notified under Section 133 of the Companies Act, 2013 have been considered
+while making such classification.
+</p>
+
+<!-- OPTION 1 -->
+<p id="AT_NCHG" class="hidden">
+The Company has a satisfactory title to all assets and there are no liens or encumbrances on the
+Company's assets.
+</p>
+
+<!-- OPTION 2 -->
+<p id="AT_CHG" class="hidden">
+The company has satisfactory title to all assets and are subject to first charge to ________
+<strong></strong>
+for securing the working capital loan / Term loan.
+</p>
+
+</div>
+
+<div class="section">
+    <h3>Property, Plant and Equipment (PPE)</h3>
+
+    <p>
+        All Property, Plant and Equipment (PPE) shown in the Balance Sheet were in existence and
+        were physically verified during the year as on the Balance Sheet date. The detailed
+        valued inventory of fixed assets as per the fixed asset register reconciles in all
+        respects with the value as per Note no. <span data-bind="PPE_NOTE"></span> of the
+        financial statements. No substantial part of fixed assets has been disposed-off during
+        the year.
+    </p>
+
+    <p>
+        The net book values at which fixed assets are stated in the Balance Sheet are arrived
+        at after:
+    </p>
+
+    <p>
+        (a) Taking into account all capital expenditures on additions thereto, but other
+        expenditures properly chargeable to revenue;
+    </p>
+
+    <p>
+        (b) Eliminating the cost and accumulated depreciation relating to items sold,
+        discarded, demolished or destroyed;
+    </p>
+
+    <p>
+        (c) Providing for adequate depreciation on fixed assets during the year.
+    </p>
+
+    <p>
+        Depreciation on PPEs is provided on the basis of useful life as given in Schedule II
+        to the Companies Act, 2013.
+    </p>
+
+    <p>
+        We confirm that none of the items which are in the nature of revenue expenditure have
+        been capitalised and none of the items which are in the nature of capital expenditure
+        have been charged to the Statement of Profit and Loss for the year.
+    </p>
+</div>
+
+<div class="section">
+    <h3>Commitments</h3>
+<p>Commitments are classified as Capital Commitments and Other Commitments. At the balance sheet date, there were no outstanding commitments for capital expenditure.</p>
+</div>
+
+<div class="section">
+    <h3>Investments</h3>
+
+    <!-- YES OPTION -->
+    <div id="INV_YES" class="hidden">
+        <p>
+            There is an investment of Rs.
+            <strong><span data-bind="TOTAL_INVESTMENT"></span></strong>
+            at the end of the year for the financial statements.
+        </p>
+
+        <p>
+            Current investments as appearing in the Balance Sheet consist of only investments
+            which are by their nature readily realisable and intended to be held for not more
+            than one year from the balance sheet date. All other investments have been shown
+            in the Balance Sheet as long-term investments.
+        </p>
+
+        <p>
+            Current investments have been valued at the lower of cost or market value.
+            Long-term investments have been valued at cost, except that any permanent
+            diminution in their values has been provided for ascertaining their carrying
+            amounts.
+        </p>
+
+        <p>
+            All the investments belong to the entity and they do not include any investments
+            held on behalf of any other persons. The entity has clear title to all of its
+            investments. There are no charges against the investments of the entity except
+            those appearing in the records of the entity.
+        </p>
+    </div>
+
+    <!-- NO OPTION -->
+    <div id="INV_NO" class="hidden">
+        <p>
+            The company does not have any investments at the end of the year.
+        </p>
+    </div>
+</div>
+<div class="section">
+    <h3>Inventories</h3>
+
+    <p>Inventories at the year-end consisted of the following:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Particulars</th>
+                <th>Amount (Rs.)</th>
+            </tr>
+        </thead>
+        <tbody id="INV_TABLE_BODY">
+            <!-- Filled from JSON -->
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Total</th>
+                <th align="Left" id="INV_TOTAL">0</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <p>
+        All quantities were determined by actual physical count in respect of stores and spares,
+        discarded assets or weight in respect of raw materials, finished / semi-finished goods
+        or measurement in respect of finished loose stock that was taken under our supervision
+        and in accordance with written instructions.
+    </p>
+
+    <p>
+        All goods included in the Schedule of inventory are the property of the Company.
+        None of the goods are held as consignee or bailee for others.
+    </p>
+
+    <p>
+        Goods in Transit shown in the financial statements are correct and have been included
+        in the relevant head of the inventory item.
+    </p>
+
+    <p>
+        Inventories do not include goods sold to customer, for which delivery is yet to be made.
+    </p>
+
+    <p>
+        Inventories have been valued as per Note no.
+        <strong><span data-bind="INVENT_NOTE"></span></strong>
+        on Financial Statements.
+    </p>
+
+    <p>
+        Provisions, if any have been made in respect of excess/shortage, slow moving,
+        damaged or obsolete items of inventories and these, in our view, are adequate.
+    </p>
+
+    <p>
+        No item of inventory has a net realisable value in the ordinary course of business,
+        which is less than the amount at which it is included in inventories.
+    </p>
+
+    <p>
+        The Company has maintained proper records of inventory and physical verification
+        has been carried out at reasonable intervals.
+    </p>
+</div>
+
+<div class="section">
+    <h3>Trade Receivable, Loans and Advances</h3>
+
+    <p>
+        The following items appearing in the books as at 31.03.<span data-bind="FY_END_YEAR"></span>
+        are considered good and fully recoverable.
+    </p>
+
+    <!-- ================= TRADE RECEIVABLES ================= -->
+    <table>
+        <thead>
+            <tr>
+                <th>Particulars</th>
+                <th>Amount (Rs.)</th>
+            </tr>
+        </thead>
+        <tbody id="TR_TABLE_BODY"></tbody>
+        <tfoot>
+            <tr>
+                <th>Net Trade Receivable</th>
+                <th align="Left" id="TR_NET">0</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <br>
+
+    <!-- ================= LOANS & ADVANCES ================= -->
+    <table>
+        <thead>
+            <tr>
+                <th>Particulars</th>
+                <th>Amount (Rs.)</th>
+            </tr>
+        </thead>
+        <tbody id="LA_TABLE_BODY"></tbody>
+        <tfoot>
+            <tr>
+                <th>Net Loans &amp; Advances</th>
+                <th align="Left" id="LA_NET">0</th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+<!-- ================= Provisions for Claims and Losses ================= -->
+<div class="section">
+    <h3>Provisions for Claims and Losses</h3>
+    <p>
+        There are no known losses and claims of material amounts for which provision is required to be made.
+    </p>
+    <p>
+        There have been no events subsequent to the balance sheet date which require adjustment of or disclosure
+        in the financial statements or notes thereto.
+    </p>
+</div>
+
+<!-- ================= Liabilities ================= -->
+<div class="section">
+    <h3>Liabilities</h3>
+    <p>
+        We confirm that all the liabilities of the Company are correctly classified into Current and Non-Current
+        based upon the criteria as set out in Schedule III to the Companies Act, 2013.
+        Also, the requirements of the Accounting Standards notified under Section 133 of the Companies Act, 2013
+        have been considered while making such classification.
+    </p>
+</div>
+
+
+<!-- ================= Deferred Tax Liabilities / Assets ================= -->
+<div class="section" id="DEFERRED_TAX_SECTION" style="display:none;">
+    <h3>Deferred Tax Liabilities / Assets</h3>
+
+    <!-- Deferred Tax Asset text -->
+    <p id="DTA_TEXT" style="display:none;">
+        Deferred Tax Assets amounting to
+        <strong>Rs. <span id="DTA_AMOUNT"></span></strong>
+        have been accounted during the year as per the provisions of
+        Accounting Standard 22, “Accounting for Taxes on Income”
+        and considered to be adequate.
+        Deferred Tax Assets are recognized only to the extent there is virtual certainty
+        that the assets will be realized in the future.
+        The unrealizable deferred tax assets have been reversed during the year.
+    </p>
+
+    <!-- Deferred Tax Liability text -->
+    <p id="DTL_TEXT" style="display:none;">
+        Deferred Tax Liabilities amounting to
+        <strong>Rs. <span id="DTL_AMOUNT"></span></strong>
+        have been accounted during the year as per the provisions of
+        Accounting Standard 22, “Accounting for Taxes on Income”
+        and considered to be adequate.
+    </p>
+</div>
+
+<!-- ================= Cash & Cash Equivalents ================= -->
+<div class="section">
+    <h3>Cash &amp; Cash Equivalents</h3>
+
+    <p>
+        The total cash balance in hand of the Company as on
+        <strong>31st March</strong>, was
+        <strong>Rs. <span id="CASH_CASH_EQUIVALENTS"></span></strong>.
+    </p>
+
+    <p>
+        Bank balances as per the books of account are matching with the balances
+        as per Bank and wherever the same are not matching, a reconciliation statement
+        has been prepared. We confirm that items appearing in the Bank Reconciliation
+        are cleared subsequent to the Balance Sheet date.
+    </p>
+</div>
+
+
+<!-- ================= Cash Flow Statement ================= -->
+<div class="section">
+    <h3>Cash Flow Statement</h3>
+
+    <p>
+        The Cash Flow Statement has been prepared under the
+        <strong>"<span id="CASH_FLOW_METHOD">_________</span> Method"</strong>
+        as set out in the Accounting Standard – 3 on Cash Flow Statement
+        notified under Section 133 of the Companies Act, 2013.
+    </p>
+
+    <p>
+        Cash and Cash Equivalents at the end of the year consist of
+        Cash in Hand and Balances with Banks.
+    </p>
+</div>
+<div class="section">
+    <h3>Statement of Profit and Loss</h3>
+
+    <p>
+        Statement of profit and loss has been prepared in accordance with Schedule III
+        to the Companies Act, 2013. Also, the requirements of the Accounting Standards
+        notified under Section 133 of the Companies Act, 2013 have been followed while
+        preparing the statement of profit and loss.
+    </p>
+
+    <p>Except as disclosed in the financial statements, the results for the year were not materially affected by:</p>
+    <p align="left">(a) Transactions of a nature not usually undertaken by the company.<br>
+       (b) Circumstances of an exceptional or non-recurring nature.<br>
+       (c) Charges or credits relating to prior years.<br>
+       (d) Changes in accounting policies.
+    </p>
+
+    <p>
+        No personal expenses of employees or Directors other than those payable under
+        contractual obligations or in accordance with the prevailing business practices
+        had been charged to revenue.
+    </p>
+
+    <h3>Related Party Transactions</h3>
+    <p>
+        Related party relationships and transactions have been appropriately accounted
+        for and disclosed in accordance with the requirements of the applicable Accounting
+        Standards. The transactions with related parties have taken effect on an arm’s
+        length basis.
+    </p>
+
+    <h3>Employee Benefits</h3>
+    <p>
+        All employee benefits i.e., short-term, long-term and post-retirement benefits that the Company is committed to providing, including any arrangements that are statutory, contractual or implicit in the Company's actions, wherever they arise, whether funded or unfunded, contributions made to approved or unapproved plan/trust, have been identified and properly accounted for and/or disclosed.
+    </p>
+
+    <h3>General</h3>
+    <p align="left">
+        Following have been properly recorded and, wherever appropriate, adequately disclosed:<br>
+        (a) losses arising from sale and purchase commitments,<br>
+        (b) agreements and options to buy back assets previously sold,<br>
+        (c) assets pledged as collateral security.
+    </p>
+
+    <p>
+        There have been no irregularities involving management or employees who have a significant role in the system of internal control, which could have material impact on the financial statements.
+    </p>
+
+    <p>
+        Foreign Exchange Rate on the transactions date in respect of Foreign Currency transactions have been taken correctly for the purpose of recording the transactions on occurrence and realignment.
+    </p>
+
+    <p>
+        The financial statements are free of material misstatements, including omissions.
+    </p>
+
+<p>
+        The Company has complied with all aspects of contractual agreements, which could have material impact on the financial statements in the event of non-compliance. There has been no non-compliance with requirements of regulatory authorities, which could have material impact on the financial statements in the event of non-compliance.
+    </p>
+
+<p>
+        The Company has no plans, which may materially affect the carrying value or classification of assets and liabilities stated in the financial statements.
+    </p>
+
+<p>
+        All purchases/acquisitions of fixed assets made during the year have duly been approved by appropriate authority.
+    </p>
+<p>
+        There are no payments or remuneration provided or paid to Directors and/or other managerial personnel during the year, which required disclosure in pursuance of part II of Schedule III to the Companies Act, 2013 except as stated in the Financial Statements.
+    </p>
+
+<p>
+        Board resolutions sanctioning purchase of fixed assets and other relevant
+        accounting matters have been duly passed during the year.
+    </p>
+
+    <p>
+        There have been no communications from regulatory agencies regarding
+        non-compliance or deficiencies in financial reporting practices.
+    </p>
+
+    <p>
+        We are not aware of any violations or possible violations of law or regulations
+        whose effects should be considered for disclosure or for recording a loss
+        or contingency.
+    </p>
+
+    <p>
+        The Company has ascertained its operating cycle as less than 12 months and
+        accordingly classified assets and liabilities as current and non-current.
+    </p>
+
+    <p>
+        The Company has not granted any loans, secured or unsecured, to parties covered
+        under Section 189 of the Companies Act, 2013.
+    </p>
+
+    <p>
+        The Company has an adequate internal control system commensurate with its size
+        and nature of business and there is no continuing failure to correct major
+        weaknesses.
+    </p>
+
+    <p>
+        The Company has not accepted any deposits from the public under Sections
+        73 to 76 of the Companies Act, 2013.
+    </p>
+
+    <p>
+        The Company has maintained prescribed cost records under Section 148(1) of
+        the Companies Act, 2013.
+    </p>
+
+    <p>
+        The Company is generally regular in depositing undisputed statutory dues and
+        there are no outstanding undisputed statutory dues as at 31.03.20xx.
+    </p>
+
+    <p>
+        There are no disputed dues relating to Income Tax, GST, Sales Tax, Service Tax,
+        Customs Duty, Wealth Tax, Excise Duty or Cess.
+    </p>
+
+    <p>
+        The Company has not defaulted in repayment of dues to banks or financial
+        institutions and has not issued any debentures.
+    </p>
+
+    <p>
+        The Company has not given any guarantee for loans taken by others.
+    </p>
+
+    <p>
+        No fraud on or by the Company has been noticed or reported during the year.
+    </p>
+
+    <p>
+        There are no pending litigations impacting the financial position of the Company.
+    </p>
+
+    <p>
+        The Company did not have any long-term contracts including derivative contracts
+        with foreseeable material losses.
+    </p>
+
+    <p>
+        No dividend has been declared or paid during the year.
+    </p>
+
+    <p>
+        No amount was required to be transferred to the Investor Education and
+        Protection Fund.
+    </p>
+
+    <p><strong>I confirm the above information.</strong></p>
+
+    <br>
+
+    <p><strong>For <span id="COMPANY_NAME"></span></strong></p>
+
+    <div align="left" id="SIGNATURE_BLOCK"></div>
+
+    <p>
+        Date: <span id="SIGN_DATE">_________</span><br>
+        Place: <span id="SIGN_PLACE"></span>
+    </p>
+</div>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+let totalInvestmentFromJSON = 0;
+
+function resetBeforeJSONLoad() {
+
+    /* ===== CONTROL PANEL RESET ===== */
+    document.querySelectorAll(".controls input").forEach(i => {
+        if (i.type !== "file") i.value = "";
+    });
+
+    document.querySelectorAll(".controls select").forEach(s => {
+        s.selectedIndex = 0;
+    });
+
+    /* Hide warnings */
+    const invWarn = document.getElementById("INV_WARN");
+    if (invWarn) invWarn.style.display = "none";
+
+    /* ===== DOCUMENT PLACEHOLDERS RESET ===== */
+    document.querySelectorAll("[data-bind]").forEach(el => {
+        el.textContent = "";
+    });
+
+    /* ===== TABLES RESET ===== */
+    const tableIds = [
+        "INV_TABLE_BODY",
+        "TR_TABLE_BODY",
+        "LA_TABLE_BODY"
+    ];
+    tableIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = "";
+    });
+
+    /* Totals */
+    ["INV_TOTAL", "TR_NET", "LA_NET"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "0";
+    });
+
+    /* ===== SECTIONS RESET ===== */
+    document.getElementById("DEFERRED_TAX_SECTION").style.display = "none";
+    document.getElementById("DTA_TEXT").style.display = "none";
+    document.getElementById("DTL_TEXT").style.display = "none";
+
+    /* Cash & Cash Equivalents */
+    const cash = document.getElementById("CASH_CASH_EQUIVALENTS");
+    if (cash) cash.textContent = "";
+
+    /* Cash flow method */
+    const cf = document.getElementById("CASH_FLOW_METHOD");
+    if (cf) cf.textContent = "_________";
+
+    /* Signature block */
+    document.getElementById("SIGNATURE_BLOCK").innerHTML = "";
+    document.getElementById("SIGN_DATE").textContent = "_________";
+    document.getElementById("SIGN_PLACE").textContent = "";
+
+    /* Asset title options */
+    document.getElementById("AT_NCHG").classList.add("hidden");
+    document.getElementById("AT_CHG").classList.add("hidden");
+
+    /* Investments section */
+    document.getElementById("INV_YES").classList.add("hidden");
+    document.getElementById("INV_NO").classList.add("hidden");
+
+    /* Reset globals */
+    totalInvestmentFromJSON = 0;
+    window._DIRECTORS = [];
+}
+
+
+
+function loadCompanyAndDirectors(json) {
+
+    // Company name
+    document.getElementById("COMPANY_NAME").innerText =
+        json.ITR.ITR6.PartA_GEN1.OrgFirmInfo.AssesseeName.SurNameOrOrgName;
+
+    // Place (City)
+    document.getElementById("SIGN_PLACE").innerText =
+        json.ITR.ITR6.PartA_GEN1.OrgFirmInfo.Address.CityOrTownOrDistrict;
+
+    // Directors
+    const directors =
+        json.ITR.ITR6.PartA_GEN2For6.KeyPersons.filter(p => p.Designation === "DIR");
+
+    const select = document.getElementById("SIGN_DIRECTOR");
+    directors.forEach((d, i) => {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.text = d.PersonName;
+        select.appendChild(opt);
+    });
+
+    window._DIRECTORS = directors;
+}
+function exportDocument() {
+    const controls = document.querySelector(".controls");
+
+    // Hide control panel
+    controls.style.display = "none";
+
+    // Small delay ensures layout recalculates before export
+    setTimeout(() => {
+        window.print();
+
+        // Restore control panel after print dialog
+        setTimeout(() => {
+            controls.style.display = "block";
+        }, 500);
+
+    }, 100);
+}
+
+function renderSignatories() {
+
+    const block = document.getElementById("SIGNATURE_BLOCK");
+    block.innerHTML = "";
+
+    const choice = document.getElementById("SIGN_DIRECTOR").value;
+    const designation = document.getElementById("SIGN_DESIGNATION").value;
+
+    if (!choice) return;
+
+    const list = (choice === "ALL")
+        ? window._DIRECTORS
+        : [window._DIRECTORS[choice]];
+
+    list.forEach(d => {
+        block.innerHTML += `
+            <p>
+                <strong>${d.PersonName}</strong><br>
+                ${designation}<br>
+                DIN: ${d.DirectorIdNo}
+            </p>
+        `;
+    });
+}
+
+function renderDate(val) {
+    document.getElementById("SIGN_DATE").innerText = val || "_________";
+}
+
+function setCashFlowMethod(method) {
+    document.getElementById("CASH_FLOW_METHOD").innerText =
+        method || "_________";
+}
+
+function renderCashAndCashEquivalents(json) {
+
+    const cash =
+        json.ITR.ITR6.PARTA_BSFor6FrmAY13.Assets.CurrentAssets
+            .CashNCashEquivalents.TotCashNCashEquivalents || 0;
+
+    document.getElementById("CASH_CASH_EQUIVALENTS").innerText =
+        cash > 0 ? cash.toLocaleString("en-IN") : "_________";
+}
+
+function renderDeferredTax(json) {
+
+    // JSON paths (exactly as per your file)
+    const dta =
+        json.ITR.ITR6.PARTA_BSFor6FrmAY13.Assets.NonCurrAssets.NetDeferredTaxAssets || 0;
+
+    const dtl =
+        json.ITR.ITR6.PARTA_BSFor6FrmAY13.EquityAndLiablities
+            .NonCurrLiabilities.NetDefferedTaxLiability || 0;
+
+    // If both are zero → hide entire section
+    if (dta === 0 && dtl === 0) {
+        document.getElementById("DEFERRED_TAX_SECTION").style.display = "none";
+        return;
+    }
+
+    // Show section
+    document.getElementById("DEFERRED_TAX_SECTION").style.display = "block";
+
+    // Asset case
+    if (dta > 0) {
+        document.getElementById("DTA_AMOUNT").innerText = dta.toLocaleString("en-IN");
+        document.getElementById("DTA_TEXT").style.display = "block";
+    }
+
+    // Liability case
+    if (dtl > 0) {
+        document.getElementById("DTL_AMOUNT").innerText = dtl.toLocaleString("en-IN");
+        document.getElementById("DTL_TEXT").style.display = "block";
+    }
+}
+
+function fillTradeReceivableAndLoans(json){
+
+    const ca =
+        json?.ITR?.ITR6?.PARTA_BSFor6FrmAY13?.Assets?.CurrentAssets;
+
+    if(!ca){
+        console.warn("Current Assets not found");
+        return;
+    }
+
+    /* ================= TRADE RECEIVABLES ================= */
+    const tr = ca.TradeReceivables || {};
+
+    const trRows = [
+        ["Considered good", tr.Others],
+        ["Considered doubtful", 0],
+        ["Less : Provision", 0]
+    ];
+
+    let trNet = 0;
+    const trBody = document.getElementById("TR_TABLE_BODY");
+    trBody.innerHTML = "";
+
+    trRows.forEach(([label, value])=>{
+        const amt = Number(value || 0);
+        if(label !== "Less : Provision") trNet += amt;
+
+        trBody.insertAdjacentHTML("beforeend", `
+            <tr>
+                <td>${label}</td>
+                <td>${amt.toLocaleString("en-IN")}</td>
+            </tr>
+        `);
+    });
+
+    document.getElementById("TR_NET").textContent =
+        trNet.toLocaleString("en-IN");
+
+    /* ================= LOANS & ADVANCES ================= */
+    const la = ca.TotShortTermLoanAdv || {};
+
+    const laRows = [
+        ["Considered good", la.TotShrtTermLoans],
+        ["Considered doubtful", 0],
+        ["Less : Provision", 0]
+    ];
+
+    let laNet = 0;
+    const laBody = document.getElementById("LA_TABLE_BODY");
+    laBody.innerHTML = "";
+
+    laRows.forEach(([label, value])=>{
+        const amt = Number(value || 0);
+        if(label !== "Less : Provision") laNet += amt;
+
+        laBody.insertAdjacentHTML("beforeend", `
+            <tr>
+                <td>${label}</td>
+                <td>${amt.toLocaleString("en-IN")}</td>
+            </tr>
+        `);
+    });
+
+    document.getElementById("LA_NET").textContent =
+        laNet.toLocaleString("en-IN");
+}
+
+
+function fillInventories(json){
+    const inv =
+        json?.ITR?.ITR6?.PARTA_BSFor6FrmAY13?.Assets?.CurrentAssets?.Inventories;
+
+    if(!inv){
+        console.warn("Inventories node not found in JSON");
+        return;
+    }
+
+    const map = [
+        ["Raw Material", inv.RawMatl],
+        ["Work-in-Progress", inv.WorkInProgress],
+        ["Finished Goods", inv.FinOrTradGood],
+        ["Stores & Spares", inv.StoresConsumables],
+        ["Loose Tools", inv.LooseTools],
+        ["Packing Materials", inv.PackingMaterials || 0],
+        ["Others", inv.Others]
+    ];
+
+    const tbody = document.getElementById("INV_TABLE_BODY");
+    tbody.innerHTML = "";
+
+    let total = 0;
+
+    map.forEach(([label, value])=>{
+        const amt = Number(value || 0);
+        total += amt;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${label}</td>
+            <td>${amt.toLocaleString("en-IN")}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById("INV_TOTAL").textContent =
+        total.toLocaleString("en-IN");
+}
+
+
+
+
+
+function extractInvestments(json){
+    const bs = json?.ITR?.ITR6?.PARTA_BSFor6FrmAY13;
+    if(!bs) return 0;
+
+    const nonCurrent =
+        bs.Assets?.NonCurrAssets?.NonCurrInvstmnts?.TotNonCurrInvstmnts || 0;
+
+    const current =
+        bs.Assets?.CurrentAssets?.CurrInvstmnts?.TotCurrInvstmnts || 0;
+
+    return Number(nonCurrent) + Number(current);
+}
+
+function toggleInvestments(value){
+    document.getElementById("INV_YES").classList.add("hidden");
+    document.getElementById("INV_NO").classList.add("hidden");
+    document.getElementById("INV_WARN").style.display = "none";
+
+    if(value === "YES"){
+        document.getElementById("INV_YES").classList.remove("hidden");
+
+        if(totalInvestmentFromJSON === 0){
+            document.getElementById("INV_WARN").style.display = "block";
+        }
+    }
+
+    if(value === "NO"){
+        document.getElementById("INV_NO").classList.remove("hidden");
+    }
+}
+
+document.addEventListener("input", function(e){
+    const key = e.target.dataset.input;
+    if(!key) return;
+
+    document.querySelectorAll('[data-bind="'+key+'"]').forEach(el=>{
+        el.textContent = e.target.value;
+    });
+});
+
+
+function loadJSON(input){
+
+    resetBeforeJSONLoad() 
+
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            const json = JSON.parse(e.target.result);
+            fillDetails(json);
+totalInvestmentFromJSON = extractInvestments(json);
+
+document.querySelectorAll('[data-bind="TOTAL_INVESTMENT"]').forEach(el=>{
+    el.textContent = totalInvestmentFromJSON.toLocaleString("en-IN");
+fillInventories(json);
+fillTradeReceivableAndLoans(json);
+renderDeferredTax(json);
+renderCashAndCashEquivalents(json);
+loadCompanyAndDirectors(json);
+
+});
+
+        } catch (err) {
+            console.error(err);
+            alert("Invalid JSON or structure mismatch");
+        }
+    };
+    reader.readAsText(file);
+}
+
+function fillDetails(json){
+    const itr6 = json?.ITR?.ITR6;
+    if (!itr6) {
+        alert("ITR6 node not found");
+        return;
+    }
+    
+    const ay = Number(itr6.Form_ITR6?.AssessmentYear);
+    if (!ay) {
+        alert("Assessment Year missing");
+        return;
+    }
+
+    const bindings = {
+        FY_END_YEAR: ay,
+	FY_YEAR: `${ay- 1}-${ay}`,
+        CURRENT_FY: `31-03-${ay}`,
+        PREVIOUS_FY: `31-03-${ay - 1}`
+    };
+
+    document.querySelectorAll("[data-bind]").forEach(el => {
+        const key = el.dataset.bind;
+        if (bindings[key] !== undefined) {
+            el.textContent = bindings[key];
+        }
+    });
+}
+
+
+function toggleAssetTitle(value){
+
+    // hide both first
+    document.getElementById("AT_NCHG").classList.add("hidden");
+    document.getElementById("AT_CHG").classList.add("hidden");
+
+    if(value === "NCHG"){
+        document.getElementById("AT_NCHG").classList.remove("hidden");
+    }
+
+    if(value === "CHG"){
+        document.getElementById("AT_CHG").classList.remove("hidden");
+    }
+}
+function exportToWord() {
+
+    // Clone full body
+    const contentClone = document.body.cloneNode(true);
+
+    // Remove control panel from clone
+    const controls = contentClone.querySelector(".controls");
+    if (controls) controls.remove();
+
+    // Build Word-compatible HTML
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+${document.querySelector("style").innerHTML}
+</style>
+</head>
+<body>
+${contentClone.innerHTML}
+</body>
+</html>`;
+
+    // Create Word file
+    const blob = new Blob(
+        ['\ufeff', html],
+        { type: 'application/msword' }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Management_Representation_Letter.doc";
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+</script>
+</body>
+</html>
