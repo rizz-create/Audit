@@ -1,0 +1,63 @@
+{
+  "ITR": {
+    "ITR6": {
+      "Form_ITR6": { "AssessmentYear": "2025" },
+      "PartA_GEN1": {
+        "OrgFirmInfo": {
+          "AssesseeName": { "SurNameOrOrgName": "SAMPLE PRIVATE LIMITED" },
+          "Address": {
+            "ResidenceNo": "12/345",
+            "RoadOrStreet": "Round South",
+            "LocalityOrArea": "Ayyanthole",
+            "CityOrTownOrDistrict": "Thrissur",
+            "StateCode": "17",
+            "CountryCode": "91",
+            "PinCode": "680003"
+          }
+        }
+      },
+      "PartA_GEN2For6": {
+        "KeyPersons": [
+          { "PersonName": "ARJUN MENON", "Designation": "DIR", "DirectorIdNo": "09876543" },
+          { "PersonName": "DIVYA NAIR", "Designation": "DIR", "DirectorIdNo": "01234567" }
+        ]
+      },
+      "ScheduleSH": {
+        "ShrhldngUnlistedCompany": {
+          "DtlsSHEndPreviousYearUC": [
+            { "ShareholderName": "ARJUN MENON", "NumberOfSharesHeld": 6000 },
+            { "ShareholderName": "DIVYA NAIR", "NumberOfSharesHeld": 4000 }
+          ]
+        }
+      },
+      "PARTA_BSFor6FrmAY13": {
+        "Assets": {
+          "NonCurrAssets": {
+            "NetDeferredTaxAssets": 0,
+            "NonCurrInvstmnts": { "TotNonCurrInvstmnts": 150000 }
+          },
+          "CurrentAssets": {
+            "CashNCashEquivalents": { "TotCashNCashEquivalents": 275000 },
+            "CurrInvstmnts": { "TotCurrInvstmnts": 0 },
+            "TradeReceivables": { "Others": 420000 },
+            "TotShortTermLoanAdv": { "TotShrtTermLoans": 85000 },
+            "Inventories": {
+              "RawMatl": 120000, "WorkInProgress": 30000, "FinOrTradGood": 90000,
+              "StoresConsumables": 15000, "LooseTools": 5000, "PackingMaterials": 4000, "Others": 6000
+            }
+          }
+        },
+        "EquityAndLiablities": {
+          "NonCurrLiabilities": { "NetDefferedTaxLiability": 32000 }
+        }
+      },
+      "PARTA_PL": {
+        "CreditsToPL": { "TotCreditsToPL": 5200000 },
+        "DebitsToPL": {
+          "DebitPlAcnt": { "PBT": 780000 },
+          "TaxProvAppr": { "ProvForCurrTax": 205000, "ProvDefTax": 12000, "ProfitAfterTax": 563000 }
+        }
+      }
+    }
+  }
+}
