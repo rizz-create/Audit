@@ -11,7 +11,7 @@ Live location (GitHub Pages): **https://marvandco.com/audit/**
 | File | Role |
 | --- | --- |
 | `index.html` | The consolidated workspace — index sheet, single upload, tabbed document viewer, exports. |
-| `documents/management-representation-letter.html` | Management Representation Letter (password gated). |
+| `documents/management-representation-letter.html` | Management Representation Letter. |
 | `documents/agm-notice.html` | AGM Notice + attendance slips. |
 | `documents/directors-report.html` | Directors' Report. |
 | `documents/directors-shareholders.html` | List of Directors & Shareholders. |
@@ -31,7 +31,9 @@ wording or logic is altered.
    choice, made in that document's own panel inside its tab.
 3. **Review & export.** Each tab shows the real document with its own input panel
    and live preview. Export a single document with "Export this to Word", or use
-   "Export all four to Word" on the upload panel.
+   "Export all four to Word" on the upload panel. Exported files are named
+   `<COMPANY_NAME>_<Document_Name>.doc` (e.g.
+   `SAMPLE_PRIVATE_LIMITED_Directors_Report.doc`).
 
 ## Important — hosting
 
@@ -44,10 +46,6 @@ case either:
 - run a local server from this folder: `python3 -m http.server` then open
   `http://localhost:8000/audit/`, **or**
 - upload the JSON inside each document tab — that always works.
-
-The **Management Representation Letter is password-gated** by design. Unlock it in
-its tab first; if you upload before unlocking, its reset-on-login clears the data,
-so re-upload inside that tab after logging in.
 
 When the JSON reaches the **Directors' Report**, that document shows its own
 "Uploading JSON will clear all entered data — Continue?" confirmation (it always

@@ -141,12 +141,6 @@ header.site{
 }
 .brand .name{font-family:var(--font-display);font-weight:600;font-size:.9375rem;letter-spacing:-.01em;line-height:1.1;}
 .brand .name small{display:block;font-family:var(--font-body);font-weight:400;font-size:var(--fs-caption);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
-.site nav{display:flex;gap:var(--sp-2);align-items:center;}
-.site nav a{
-  font-size:var(--fs-small);font-weight:500;color:var(--muted);text-decoration:none;
-  padding:8px 10px;border-radius:var(--radius-sm);transition:color .1s var(--ease),background .1s var(--ease);
-}
-.site nav a:hover{color:var(--fg);background:var(--surface-2);}
 .icon-btn{
   display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--border);
   background:var(--surface);color:var(--muted);border-radius:var(--radius-sm);cursor:pointer;
@@ -198,10 +192,13 @@ header.site{
 }
 .upload-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:var(--sp-6);align-items:start;}
 .dropzone{
-  border:1.6px dashed var(--border-strong);border-radius:var(--radius);
-  padding:var(--sp-6);text-align:center;background:var(--surface-2);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:2px dashed var(--border-strong);border-radius:var(--radius);
+  padding:var(--sp-6) var(--sp-5);text-align:center;background:var(--surface-2);cursor:pointer;
+  min-height:210px;
   transition:border-color .12s var(--ease),background .12s var(--ease);
 }
+.dropzone .hint{max-width:34ch;}
 .dropzone:hover,.dropzone.drag{border-color:var(--accent);background:color-mix(in srgb,var(--surface-2) 70%,var(--accent) 6%);}
 .dropzone svg{width:30px;height:30px;margin:0 auto var(--sp-3);color:var(--muted);}
 .dropzone strong{font-family:var(--font-display);font-weight:600;}
@@ -256,7 +253,6 @@ section.block{padding:var(--sp-7) 0;}
 }
 .badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
 .badge.ready{color:var(--success);border-color:color-mix(in srgb,var(--success) 40%,transparent);background:var(--success-bg);}
-.badge.lock{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:var(--warn-bg);}
 
 /* ============================================================
    7. DOCUMENT WORKSPACE (tabs + iframes)
@@ -308,7 +304,6 @@ footer.site .copy{font-size:var(--fs-caption);color:var(--muted);letter-spacing:
 }
 @media (max-width:520px){
   .ribbon{grid-template-columns:1fr;}
-  .site nav a.hide-sm{display:none;}
   .panel{padding:var(--sp-4);}
 }
 
@@ -330,11 +325,6 @@ footer.site .copy{font-size:var(--fs-caption);color:var(--muted);letter-spacing:
         <small>Audit Finalisation Suite</small>
       </span>
     </a>
-    <nav aria-label="Primary">
-      <a href="#index-sheet" class="hide-sm">Index sheet</a>
-      <a href="#workspace" class="hide-sm">Documents</a>
-      <a href="../index.html">Firm site</a>
-    </nav>
     <button class="icon-btn" id="themeToggle" type="button" aria-label="Switch colour theme">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
@@ -381,14 +371,10 @@ footer.site .copy{font-size:var(--fs-caption);color:var(--muted);letter-spacing:
       <div class="upload-grid">
         <!-- Dropzone -->
         <div>
-          <div class="field" style="margin-bottom:var(--sp-3)">
-            <label for="masterJson" id="jsonLabel">Winman audit JSON</label>
-            <p class="sub">ITR-6 structure — the same file you upload into each document today.</p>
-          </div>
           <label class="dropzone" id="dropzone" for="masterJson">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
-            <strong>Drop the JSON file here</strong>
-            <div class="hint">or click to browse — nothing leaves your computer</div>
+            <strong>Drop the Winman JSON here</strong>
+            <div class="hint">or click to browse — the ITR-6 file, same one you upload today. Nothing leaves your computer.</div>
             <div class="file" id="fileName" hidden></div>
             <input class="visually-hidden" type="file" id="masterJson" accept=".json" aria-describedby="uploadStatus">
           </label>
@@ -460,11 +446,7 @@ footer.site .copy{font-size:var(--fs-caption);color:var(--muted);letter-spacing:
     <div class="tabs" role="tablist" aria-label="Documents" id="tabs"><!-- tabs injected --></div>
     <div class="viewer">
       <div class="toolbar">
-        <span class="grow" id="viewerHint">Each tab is the original document, unchanged — its own input panel and live preview are inside.</span>
-        <button class="btn btn-ghost btn-sm" type="button" id="openTab">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg>
-          Open full screen
-        </button>
+        <span class="grow" id="viewerHint">Each tab is the original document — its own input panel and live preview are inside. Set the document-specific options here, then export.</span>
         <button class="btn btn-primary btn-sm" type="button" id="exportCurrent">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M12 15l-4-4M12 15l4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
           Export this to Word
@@ -499,7 +481,7 @@ footer.site .copy{font-size:var(--fs-caption);color:var(--muted);letter-spacing:
    ============================================================ */
 const DOCS = [
   { key:"mrl",   name:"Management Representation Letter", file:"documents/management-representation-letter.html",
-    purpose:"Client's representations to the auditor for the financial year.", exportFn:"exportToWord", locked:true },
+    purpose:"Client's representations to the auditor for the financial year.", exportFn:"exportToWord" },
   { key:"agm",   name:"AGM Notice & Attendance Slips",    file:"documents/agm-notice.html",
     purpose:"Notice of the Annual General Meeting with per-shareholder attendance slips.", exportFn:"exportToWord" },
   { key:"dir",   name:"Directors' Report",               file:"documents/directors-report.html",
@@ -527,9 +509,7 @@ DOCS.forEach((d, i) => {
     '<td class="num">'+String(i+1).padStart(2,"0")+'</td>'+
     '<td><div class="doc-name">'+d.name+'</div><div class="doc-file">'+d.file.split("/").pop()+'</div></td>'+
     '<td class="doc-purpose">'+d.purpose+'</td>'+
-    '<td><span class="badge" id="badge-'+d.key+'">'+
-        (d.locked ? '<span class="dot"></span>Password gated' : '<span class="dot"></span>Awaiting JSON')+
-      '</span></td>'+
+    '<td><span class="badge" id="badge-'+d.key+'"><span class="dot"></span>Awaiting JSON</span></td>'+
     '<td><div class="row-actions">'+
         '<button class="btn btn-ghost btn-sm" type="button" data-open="'+d.key+'">'+icoOpen+'Open</button>'+
         '<button class="btn btn-ghost btn-sm" type="button" data-export="'+d.key+'">'+icoDown+'Word</button>'+
@@ -607,7 +587,7 @@ function fanOutJSON(file){
       input.files = dt.files;
       input.dispatchEvent(new Event("change", { bubbles:true }));
       delivered++;
-      setBadge(d.key, d.locked ? "lock-ready" : "ready");
+      setBadge(d.key, "ready");
     }catch(err){ console.warn("Deliver failed for "+d.key, err); }
   });
   return { delivered, reachable };
@@ -637,7 +617,6 @@ function setBadge(key, state){
   const el = document.getElementById("badge-"+key);
   if(!el) return;
   if(state === "ready"){ el.className = "badge ready"; el.innerHTML = '<span class="dot"></span>Ready to export'; }
-  else if(state === "lock-ready"){ el.className = "badge lock"; el.innerHTML = '<span class="dot"></span>Unlock to view'; }
 }
 
 /* ---------- Upload wiring ---------- */
@@ -672,7 +651,7 @@ function handleFile(file){
         "File read successfully, but this page can't push it into the embedded documents when opened directly from disk. "+
         "Host the folder on GitHub Pages (or run a local server) for one-click fill — or upload the JSON inside each tab, which always works.");
     } else if(delivered < DOCS.length){
-      setStatus("ok", "Sent to "+delivered+" of "+DOCS.length+" documents. The Management Representation Letter is password-gated — unlock it in its tab, then re-upload there if needed.");
+      setStatus("warn", "Sent to "+delivered+" of "+DOCS.length+" documents. For any tab still showing Awaiting JSON, upload the file inside that tab.");
     } else {
       setStatus("ok", "Delivered to all four documents. Review the options in each tab, then export.");
     }
@@ -708,10 +687,6 @@ function exportDoc(key){
   }
 }
 document.getElementById("exportCurrent").addEventListener("click", () => exportDoc(currentKey));
-document.getElementById("openTab").addEventListener("click", () => {
-  const d = DOCS.find(x => x.key === currentKey);
-  window.open(d.file, "_blank", "noopener");
-});
 document.getElementById("exportAll").addEventListener("click", () => {
   DOCS.forEach((d, i) => setTimeout(() => exportDoc(d.key), i * 700)); // stagger so the browser allows each download
 });
